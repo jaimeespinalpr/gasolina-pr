@@ -1093,7 +1093,7 @@ select.form-control {
   }
   
   .app-container {
-    padding-bottom: var(--bottom-nav-height);
+    padding-bottom: 0;
   }
   
   .main-content {
@@ -1356,7 +1356,7 @@ select.form-control {
   .main-content {
     margin-left: 0 !important;
     width: 100% !important;
-    height: calc(100% - 56px) !important; /* height minus new compact nav height */
+    height: 100% !important; /* height is full now that bottom nav is removed */
     overflow-y: auto !important;
     padding: 1rem 1rem 2rem 1rem !important; /* compact padding */
   }
