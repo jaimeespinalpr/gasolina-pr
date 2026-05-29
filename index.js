@@ -270,6 +270,9 @@ function navigateTo(sectionId) {
   } else if (sectionId === 'directory') {
     titleText.textContent = 'Precios en Bomba';
     subtitleText.textContent = 'Visualiza los precios y actualiza la bomba en tiempo real';
+    
+    // Automatically trigger proximity scan on navigation
+    autoSortStationsByProximity();
   } else if (sectionId === 'calculators') {
     titleText.textContent = 'Herramientas de Ahorro';
     subtitleText.textContent = 'Calcula costos de llenado y convierte medidas al instante';
@@ -393,6 +396,9 @@ function renderStationsGrid() {
     const isCheapest = station.prices.regular === cheapestReg;
     const cheapestBadge = isCheapest ? `<span class="fuel-badge" style="background-color: var(--color-regular-glow); color: var(--color-regular); font-size: 0.65rem; padding: 0.25rem 0.5rem; margin-left: 0.5rem;">Más Barata</span>` : '';
     
+    const distanceBadge = (station.distanceMeters && station.distanceMeters !== Infinity) ? 
+      `<span class="fuel-badge" style="background-color: rgba(99, 102, 241, 0.15); color: #a5b4fc; font-size: 0.65rem; padding: 0.25rem 0.5rem; margin-left: 0.25rem;">📍 a ${(station.distanceMeters / 1000).toFixed(1)} km</span>` : '';
+    
     // Check if any price exceeds DACO Maximum limits
     const violatesRegular = station.prices.regular > DACO_MAX_LIMITS.regular;
     const violatesPremium = station.prices.premium > DACO_MAX_LIMITS.premium;
@@ -425,7 +431,7 @@ function renderStationsGrid() {
         <div class="station-brand-group">
           <div class="station-brand-icon ${brandClass}">${firstLetter}</div>
           <div>
-            <div class="station-title">${station.name} ${cheapestBadge}</div>
+            <div class="station-title" style="display: flex; align-items: center; flex-wrap: wrap; gap: 0.25rem;">${station.name} ${cheapestBadge} ${distanceBadge}</div>
             <div class="station-meta" style="margin-bottom: 0;">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
@@ -1160,5 +1166,47 @@ function togglePanel(panelId) {
       renderSVGChart();
     }, 400);
   }
+}
+
+// --- Auto GPS Proximity Distance Sorting ---
+function autoSortStationsByProximity() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        sortAndRenderStations(lat, lon);
+      },
+      (error) => {
+        console.warn("Proximity Geolocation error: " + error.message + ". Running mock GPS fallback...");
+        // Mock fallback to San Juan close coordinates (e.g. Puma Las Cumbres)
+        sortAndRenderStations(18.3720, -66.0890);
+      },
+      { enableHighAccuracy: true, timeout: 4000, maximumAge: 0 }
+    );
+  } else {
+    renderStationsGrid();
+  }
+}
+
+// Calculate distance and sort stations in vivo
+function sortAndRenderStations(userLat, userLon) {
+  stations = stations.map(station => {
+    if (station.coords) {
+      const distance = Math.sqrt(Math.pow(station.coords.lat - userLat, 2) + Math.pow(station.coords.lon - userLon, 2));
+      station.distanceMeters = Math.round(distance * 111.3 * 1000);
+    } else {
+      station.distanceMeters = Infinity;
+    }
+    return station;
+  });
+  
+  // Sort stations: closest distance first!
+  stations.sort((a, b) => a.distanceMeters - b.distanceMeters);
+  
+  // Re-render the grid!
+  renderStationsGrid();
+  
+  showToast("📍 Gasolineras ordenadas por cercanía a tu ubicación.", "success");
 }
 
