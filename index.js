@@ -791,7 +791,7 @@ function processCoordinates(lat, lon) {
 
 // --- Modal Controls ---
 function openReportModal() {
-  document.querySelector('#report-modal .modal-title').textContent = 'Reportar Precios en Bomba';
+  document.querySelector('#report-modal .modal-title').textContent = 'Radicar Denuncia / Reporte';
   const modal = document.getElementById('report-modal');
   modal.classList.add('active');
   document.body.style.overflow = 'hidden';

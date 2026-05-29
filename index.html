@@ -65,18 +65,26 @@
       
       <!-- TOP UTILITIES HEADER -->
       <header class="top-header">
-        <div class="header-title">
+        <div class="header-title" onclick="navigateTo('dashboard')" style="cursor: pointer;">
           <h1 id="page-title-text">Precios de Combustible</h1>
           <p id="page-subtitle-text">Monitoreo oficial y comunitario en Puerto Rico</p>
         </div>
         
-        <div class="header-controls">
-          <!-- REPORT BUTTON -->
-          <button class="btn-primary" onclick="openReportModal()" id="desktop-report-btn" style="height: 32px; padding: 0.35rem 0.75rem; border-radius: 20px; font-size: 0.75rem;">
+        <div class="header-controls" style="display: flex; gap: 0.5rem; align-items: center;">
+          <!-- PRECIO ACTUAL BUTTON -->
+          <button class="btn-secondary" onclick="navigateTo('directory')" id="desktop-precio-actual-btn" style="height: 32px; padding: 0.35rem 0.75rem; border-radius: 20px; font-size: 0.75rem; display: flex; align-items: center; gap: 0.35rem; border-color: var(--border-color); color: var(--text-primary); background: rgba(255, 255, 255, 0.05); font-weight: 700;">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:14px; height:14px; stroke: var(--color-regular);">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Precio Actual
+          </button>
+          
+          <!-- DENUNCIA BUTTON -->
+          <button class="btn-primary" onclick="openReportModal()" id="desktop-report-btn" style="height: 32px; padding: 0.35rem 0.75rem; border-radius: 20px; font-size: 0.75rem; display: flex; align-items: center; gap: 0.35rem; background: linear-gradient(135deg, var(--color-danger), #b91c1c); border: none; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.25); color: white; font-weight: 700;">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="width:14px; height:14px;">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
             </svg>
-            Reportar
+            Denuncia
           </button>
         </div>
       </header>
@@ -384,7 +392,7 @@
   <div class="modal-overlay" id="report-modal">
     <div class="modal">
       <div class="modal-header">
-        <h3 class="modal-title">Reportar Precios en Bomba</h3>
+        <h3 class="modal-title">Radicar Denuncia / Reporte</h3>
         <button class="modal-close" onclick="closeReportModal()">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
