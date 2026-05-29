@@ -501,19 +501,19 @@ function renderStationsGrid() {
 
       <!-- COLLAPSIBLE RAPID INLINE PRICE EDITOR -->
       <div class="inline-price-editor" id="editor-${station.id}" style="display:none; margin-top: 0.5rem; border-top: 1px dashed var(--border-color); padding-top: 1rem; margin-bottom: 1rem;">
-        <h4 style="font-size:0.75rem; font-family:var(--font-title); color:var(--text-secondary); margin-bottom:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Actualización Rápida (¢/Litro)</h4>
+        <h4 style="font-size:0.75rem; font-family:var(--font-title); color:var(--text-secondary); margin-bottom:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Actualización Rápida ($/Litro)</h4>
         <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:0.5rem; margin-bottom:0.75rem;">
           <div>
             <label style="font-size:0.6rem; color:var(--color-regular); font-weight:700; display:block; margin-bottom:0.25rem; text-transform:uppercase;">Regular</label>
-            <input type="number" step="0.1" class="form-control" id="inline-reg-${station.id}" value="${station.prices.regular}" style="padding:0.4rem 0.5rem; padding-left:0.5rem; font-size:0.85rem; text-align:center;">
+            <input type="number" step="0.01" class="form-control" id="inline-reg-${station.id}" value="${(station.prices.regular / 100).toFixed(3)}" onblur="sanitizeInlinePriceInput(this)" style="padding:0.4rem 0.5rem; padding-left:0.5rem; font-size:0.85rem; text-align:center;">
           </div>
           <div>
             <label style="font-size:0.6rem; color:var(--color-premium); font-weight:700; display:block; margin-bottom:0.25rem; text-transform:uppercase;">Premium</label>
-            <input type="number" step="0.1" class="form-control" id="inline-prem-${station.id}" value="${station.prices.premium}" style="padding:0.4rem 0.5rem; padding-left:0.5rem; font-size:0.85rem; text-align:center;">
+            <input type="number" step="0.01" class="form-control" id="inline-prem-${station.id}" value="${(station.prices.premium / 100).toFixed(3)}" onblur="sanitizeInlinePriceInput(this)" style="padding:0.4rem 0.5rem; padding-left:0.5rem; font-size:0.85rem; text-align:center;">
           </div>
           <div>
             <label style="font-size:0.6rem; color:var(--color-diesel); font-weight:700; display:block; margin-bottom:0.25rem; text-transform:uppercase;">Diésel</label>
-            <input type="number" step="0.1" class="form-control" id="inline-dsl-${station.id}" value="${station.prices.diesel}" style="padding:0.4rem 0.5rem; padding-left:0.5rem; font-size:0.85rem; text-align:center;">
+            <input type="number" step="0.01" class="form-control" id="inline-dsl-${station.id}" value="${(station.prices.diesel / 100).toFixed(3)}" onblur="sanitizeInlinePriceInput(this)" style="padding:0.4rem 0.5rem; padding-left:0.5rem; font-size:0.85rem; text-align:center;">
           </div>
         </div>
         <div style="display:flex; gap:0.5rem;">
@@ -565,14 +565,28 @@ function toggleInlineEditor(stationId) {
 
 // --- Save Prices from Inline Card Editor ---
 function saveInlinePrices(stationId) {
-  const priceReg = parseFloat(document.getElementById(`inline-reg-${stationId}`).value);
-  const pricePrem = parseFloat(document.getElementById(`inline-prem-${stationId}`).value);
-  const priceDsl = parseFloat(document.getElementById(`inline-dsl-${stationId}`).value);
+  let valReg = parseFloat(document.getElementById(`inline-reg-${stationId}`).value);
+  let valPrem = parseFloat(document.getElementById(`inline-prem-${stationId}`).value);
+  let valDsl = parseFloat(document.getElementById(`inline-dsl-${stationId}`).value);
   
-  if (isNaN(priceReg) || isNaN(pricePrem) || isNaN(priceDsl)) {
+  if (isNaN(valReg) || isNaN(valPrem) || isNaN(valDsl)) {
     showToast('Por favor, ingresa precios numéricos válidos en bomba.', 'error');
     return;
   }
+  
+  // Enforce third decimal is 7 (sanitization)
+  let regStr = valReg.toFixed(3);
+  let premStr = valPrem.toFixed(3);
+  let dslStr = valDsl.toFixed(3);
+  
+  valReg = parseFloat(regStr.substring(0, regStr.length - 1) + '7');
+  valPrem = parseFloat(premStr.substring(0, premStr.length - 1) + '7');
+  valDsl = parseFloat(dslStr.substring(0, dslStr.length - 1) + '7');
+  
+  // Convert dollars to centavos (e.g. 1.127 * 100 = 112.7)
+  const priceReg = parseFloat((valReg * 100).toFixed(1));
+  const pricePrem = parseFloat((valPrem * 100).toFixed(1));
+  const priceDsl = parseFloat((valDsl * 100).toFixed(1));
   
   const index = stations.findIndex(s => s.id === stationId);
   if (index !== -1) {
@@ -1284,6 +1298,17 @@ function processPumpPhoto(stationId, event) {
       }, 1000);
     }
   }, 2200);
+}
+
+// --- Sanitize and format price input to always end in '7' thousandths ---
+function sanitizeInlinePriceInput(input) {
+  let val = parseFloat(input.value);
+  if (isNaN(val)) return;
+  
+  // Enforce 3 decimal places and replace the thousandth digit with '7'
+  let str = val.toFixed(3);
+  let adjustedStr = str.substring(0, str.length - 1) + '7';
+  input.value = adjustedStr;
 }
 
 
