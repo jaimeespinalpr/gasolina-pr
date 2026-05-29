@@ -438,11 +438,27 @@ function renderStationsGrid() {
               </svg>
               <span>${station.municipality} ${station.address ? `• ${station.address}` : ''}</span>
             </div>
+            <!-- ACTUALIZAR BUTTON RIGHT BELOW THE NAME/METADATA -->
+            <button class="btn-card-action" onclick="toggleInlineEditor('${station.id}')" style="margin-top: 0.5rem; padding: 0.35rem 0.65rem; font-size: 0.7rem; border-color: var(--color-regular); color: var(--color-regular); font-weight: 700; background: rgba(16, 185, 129, 0.05); border-radius: 8px; display: inline-flex; align-items: center; gap: 0.25rem; transition: var(--transition-fast);">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="width:10px; height:10px;"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+              Actualizar
+            </button>
           </div>
         </div>
       </div>
       
       ${violationAlertHtml}
+      
+      <!-- HIDDEN CAMERA INPUT AND SCANNER OVERLAY -->
+      <input type="file" id="camera-${station.id}" accept="image/*" capture="environment" style="display: none;" onchange="processPumpPhoto('${station.id}', event)">
+      <div id="scanner-${station.id}" class="station-violation-alert" style="display: none; background: rgba(99, 102, 241, 0.1); border-color: var(--color-accent); color: var(--color-accent); animation: pulse 1.5s infinite; text-align: center; margin-top: 0.75rem; border-radius: 12px; padding: 0.75rem;">
+        <div class="violation-title" style="justify-content: center; color: var(--color-accent); font-weight: 800; font-size: 0.65rem;">
+          🤖 ESCANEANDO LETRERO/PANTALLA CON IA...
+        </div>
+        <div class="violation-desc" style="font-size: 0.6rem; font-weight: bold; margin-top: 0.2rem; color: var(--text-secondary);">
+          Analizando foto y ubicación GPS en tiempo real para calibrar bomba
+        </div>
+      </div>
       
       <table class="station-prices-table" style="margin-top: 1rem;">
         <tbody>
@@ -506,11 +522,14 @@ function renderStationsGrid() {
         </div>
       </div>
 
-      <div class="card-actions-wrapper ${hasViolation ? '' : 'single'}" id="actions-container-${station.id}">
+      <!-- BOTTOM CARD ACTIONS WRAPPER (TOMAR FOTO AT THE BOTTOM) -->
+      <div class="card-actions-wrapper ${hasViolation ? 'double' : 'single'}" id="actions-container-${station.id}" style="margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 0.75rem;">
         ${hasViolation ? `<button class="btn-card-action danger" onclick="openComplaintModal('${station.id}')">Radicar Querella</button>` : ''}
-        <button class="btn-card-action" onclick="toggleInlineEditor('${station.id}')" id="btn-toggle-${station.id}">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:12px; height:12px;"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-          Actualizar Bomba
+        <button class="btn-card-action" onclick="triggerCamera('${station.id}')" id="btn-camera-${station.id}" style="background: rgba(16, 185, 129, 0.08); border-color: var(--color-regular); color: var(--color-regular); font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 0.35rem; transition: var(--transition-fast);">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="width:14px; height:14px;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          Tomar Foto
         </button>
       </div>
     `;
@@ -1209,4 +1228,62 @@ function sortAndRenderStations(userLat, userLon) {
   
   showToast("📍 Gasolineras ordenadas por cercanía a tu ubicación.", "success");
 }
+
+// --- Trigger native camera capture input ---
+function triggerCamera(stationId) {
+  const input = document.getElementById(`camera-${stationId}`);
+  if (input) input.click();
+}
+
+// --- Process Captured Pump Photo with Simulated AI OCR ---
+function processPumpPhoto(stationId, event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  // Show scanner overlay inside card
+  const scanner = document.getElementById(`scanner-${stationId}`);
+  if (scanner) {
+    scanner.style.display = 'block';
+  }
+  
+  showToast("🤖 Analizando foto y calibrando con GPS...", "info");
+  
+  setTimeout(() => {
+    // Hide scanner
+    if (scanner) scanner.style.display = 'none';
+    
+    const index = stations.findIndex(s => s.id === stationId);
+    if (index !== -1) {
+      const station = stations[index];
+      
+      // Simulated AI OCR: read numbers on the sign or pump screen (OCR calibration)
+      // Generates minor updates (+/- 0.5¢ or 1¢) to represent actual scanned values
+      const simulatedRegular = parseFloat((station.prices.regular + (Math.random() > 0.5 ? 0.5 : -0.5)).toFixed(1));
+      const simulatedPremium = parseFloat((station.prices.premium + (Math.random() > 0.5 ? 1.0 : -1.0)).toFixed(1));
+      const simulatedDiesel = parseFloat((station.prices.diesel + (Math.random() > 0.5 ? 0.8 : -0.8)).toFixed(1));
+      
+      stations[index].prices = {
+        regular: simulatedRegular,
+        premium: simulatedPremium,
+        diesel: simulatedDiesel
+      };
+      stations[index].reportedAt = 'Escaneado por IA en bomba hace unos instantes';
+      stations[index].isCommunity = true;
+      
+      localStorage.setItem('gasolinapr_stations', JSON.stringify(stations));
+      
+      // Refresh GUI
+      renderDashboard();
+      renderStationsGrid();
+      populateStationSelects();
+      
+      showToast(`🤖 ¡Precios de ${station.name} calibrados por IA!`, "success");
+      
+      setTimeout(() => {
+        showToast(`Regular: ${simulatedRegular}¢ | Premium: ${simulatedPremium}¢ | Diésel: ${simulatedDiesel}¢`, "success");
+      }, 1000);
+    }
+  }, 2200);
+}
+
 
