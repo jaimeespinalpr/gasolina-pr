@@ -1146,3 +1146,19 @@ function renderSVGChart() {
 window.addEventListener('resize', () => {
   renderSVGChart();
 });
+
+// --- Collapsible Panel Toggle ---
+function togglePanel(panelId) {
+  const panel = document.getElementById(panelId);
+  if (!panel) return;
+  
+  panel.classList.toggle('collapsed');
+  
+  // If we open the trends chart, redraw it once the transition ends to scale beautifully
+  if (panelId === 'panel-price-trends' && !panel.classList.contains('collapsed')) {
+    setTimeout(() => {
+      renderSVGChart();
+    }, 400);
+  }
+}
+
