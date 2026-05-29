@@ -21,13 +21,13 @@ const DACO_MAX_LIMITS = {
 
 // --- Seed Data: Official Wholesalers (DACO May 29, 2026) ---
 const wholesalersData = [
-  { name: 'American Gas', regular: 107.7, premium: 115.7, diesel: 120.7 },
+  { name: 'American', regular: 107.7, premium: 115.7, diesel: 120.7 },
   { name: '76', regular: 107.7, premium: 121.7, diesel: 120.7 },
   { name: 'Gulf', regular: 108.7, premium: 122.7, diesel: 120.7 },
   { name: 'Phillips', regular: 107.7, premium: 121.7, diesel: 122.7 },
   { name: 'Sunoco', regular: 110.7, premium: 128.7, diesel: 128.7 },
   { name: 'Puma', regular: 109.7, premium: 123.7, diesel: 121.7 },
-  { name: 'TotalEnergies', regular: 110.7, premium: 124.7, diesel: 122.7 },
+  { name: 'Total', regular: 110.7, premium: 124.7, diesel: 122.7 },
   { name: 'Ecomaxx', regular: 108.7, premium: 118.7, diesel: 120.7 }
 ];
 
@@ -57,7 +57,7 @@ const defaultStations = [
   },
   {
     id: 'st-3',
-    name: 'TotalEnergies San Patricio',
+    name: 'Total San Patricio',
     brand: 'Total',
     municipality: 'Guaynabo',
     address: 'Roosevelt Esq. San Patricio',
@@ -112,7 +112,7 @@ const defaultStations = [
   },
   {
     id: 'st-8',
-    name: 'TotalEnergies Rexville',
+    name: 'Total Rexville',
     brand: 'Total',
     municipality: 'Bayamón',
     address: 'Carr. 167 Km 15.2',
@@ -156,7 +156,7 @@ const defaultStations = [
   },
   {
     id: 'st-12',
-    name: 'TotalEnergies Los Colobos',
+    name: 'Total Los Colobos',
     brand: 'Total',
     municipality: 'Carolina',
     address: 'Ave. 65 de Infantería',
@@ -334,15 +334,15 @@ function renderWholesalers() {
       </div>
       <div class="wholesaler-prices-group">
         <div class="wholesaler-price-item">
-          <span>Reg:</span>
+          <span>Reg</span>
           <strong>${formatPrice(row.regular)}</strong>
         </div>
         <div class="wholesaler-price-item">
-          <span>Prem:</span>
+          <span>Prem</span>
           <strong>${formatPrice(row.premium)}</strong>
         </div>
         <div class="wholesaler-price-item">
-          <span>Dsl:</span>
+          <span>Dsl</span>
           <strong>${formatPrice(row.diesel)}</strong>
         </div>
       </div>
