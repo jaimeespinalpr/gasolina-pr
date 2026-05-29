@@ -39,7 +39,7 @@
         <li class="nav-item">
           <a class="nav-link" onclick="navigateTo('directory')" id="nav-directory">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-            Buscar Estaciones
+            Precios en Bomba
           </a>
         </li>
         <li class="nav-item">
@@ -66,7 +66,7 @@
       </a>
       <a class="mobile-nav-link" onclick="navigateTo('directory')" id="m-nav-directory">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-        <span>Estaciones</span>
+        <span>Bomba</span>
       </a>
       <a class="mobile-nav-link" onclick="navigateTo('calculators')" id="m-nav-calculators">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 11h.01M9 11h.01M12 14h.01M15 11h.01M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg>
@@ -89,26 +89,12 @@
         </div>
         
         <div class="header-controls">
-          <!-- SYNC BUTTON -->
-          <button class="btn-secondary" onclick="syncWithDACO()" id="sync-daco-btn" style="display: flex; align-items: center; gap: 0.5rem; border-color: var(--color-accent); color: #a5b4fc;">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:16px; height:16px; transition: transform 0.5s ease;" id="sync-icon-svg">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89H18" />
-            </svg>
-            <span id="sync-btn-text">Sincronizar DACO</span>
-          </button>
-
-          <!-- LITERS / GALLONS TOGGLE -->
-          <div class="unit-toggle" id="global-unit-toggle">
-            <button class="unit-btn active" id="unit-l" onclick="setGlobalUnit('L')">Litro (L)</button>
-            <button class="unit-btn" id="unit-g" onclick="setGlobalUnit('G')">Galón (G)</button>
-          </div>
-          
           <!-- REPORT BUTTON -->
-          <button class="btn-primary" onclick="openReportModal()" id="desktop-report-btn">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:18px; height:18px;">
+          <button class="btn-primary" onclick="openReportModal()" id="desktop-report-btn" style="height: 32px; padding: 0.35rem 0.75rem; border-radius: 20px; font-size: 0.75rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="width:14px; height:14px;">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
             </svg>
-            Reportar Precio
+            Reportar
           </button>
         </div>
       </header>
@@ -127,14 +113,11 @@
                   <span id="trend-regular-icon">→</span> <span id="trend-regular-text">Estable</span>
                 </div>
               </div>
-              <div class="price-display">
-                <div class="average-price" id="avg-regular-display">
-                  $1.097 <span class="unit">/L</span>
-                </div>
+              <div class="price-display" style="text-align: center; margin-bottom: 1.25rem;">
+                <div class="daco-range-main" id="range-regular-display">107.7¢ - 111.7¢</div>
               </div>
-              <div class="card-footer-info">
-                <span>Rango DACO:</span>
-                <span class="daco-range" id="range-regular-display">107.7¢ - 111.7¢</span>
+              <div class="card-footer-info" style="justify-content: center;">
+                <span style="font-weight: 600; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.5px; color: var(--text-muted);">Rango Oficial DACO</span>
               </div>
             </div>
             
@@ -146,14 +129,11 @@
                   <span id="trend-premium-icon">↗</span> <span id="trend-premium-text">Subiendo</span>
                 </div>
               </div>
-              <div class="price-display">
-                <div class="average-price" id="avg-premium-display">
-                  $1.222 <span class="unit">/L</span>
-                </div>
+              <div class="price-display" style="text-align: center; margin-bottom: 1.25rem;">
+                <div class="daco-range-main" id="range-premium-display">115.7¢ - 128.7¢</div>
               </div>
-              <div class="card-footer-info">
-                <span>Rango DACO:</span>
-                <span class="daco-range" id="range-premium-display">115.7¢ - 128.7¢</span>
+              <div class="card-footer-info" style="justify-content: center;">
+                <span style="font-weight: 600; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.5px; color: var(--text-muted);">Rango Oficial DACO</span>
               </div>
             </div>
             
@@ -165,74 +145,59 @@
                   <span id="trend-diesel-icon">↘</span> <span id="trend-diesel-text">Bajando</span>
                 </div>
               </div>
-              <div class="price-display">
-                <div class="average-price" id="avg-diesel-display">
-                  $1.212 <span class="unit">/L</span>
-                </div>
+              <div class="price-display" style="text-align: center; margin-bottom: 1.25rem;">
+                <div class="daco-range-main" id="range-diesel-display">119.7¢ - 128.7¢</div>
               </div>
-              <div class="card-footer-info">
-                <span>Rango DACO:</span>
-                <span class="daco-range" id="range-diesel-display">119.7¢ - 128.7¢</span>
+              <div class="card-footer-info" style="justify-content: center;">
+                <span style="font-weight: 600; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.5px; color: var(--text-muted);">Rango Oficial DACO</span>
               </div>
             </div>
           </div>
 
-          <!-- TREND CHART & WHOLESALERS ROW -->
-          <div class="dashboard-details-row">
-            
-            <!-- SVG TREND CHART PANEL -->
-            <div class="glass-panel">
-              <div class="panel-header">
-                <div class="panel-title">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                  </svg>
-                  Tendencias de Precios (LITRO)
-                </div>
-                <div class="trend-legend">
-                  <div class="legend-item">
-                    <div class="legend-dot regular"></div> Regular
-                  </div>
-                  <div class="legend-item">
-                    <div class="legend-dot premium"></div> Premium
-                  </div>
-                  <div class="legend-item">
-                    <div class="legend-dot diesel"></div> Diésel
-                  </div>
-                </div>
+          <!-- SVG TREND CHART PANEL (FULL WIDTH) -->
+          <div class="glass-panel" style="width: 100%;">
+            <div class="panel-header" style="margin-bottom: 0.5rem !important;">
+              <div class="panel-title">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                </svg>
+                Tendencias de Precios (LITRO)
               </div>
-              
-              <!-- INTERACTIVE SVG CHART -->
-              <div class="chart-container" id="svg-chart-container">
-                <!-- SVG content generated by index.js -->
+              <div class="trend-legend">
+                <div class="legend-item">
+                  <div class="legend-dot regular"></div> Regular
+                </div>
+                <div class="legend-item">
+                  <div class="legend-dot premium"></div> Premium
+                </div>
+                <div class="legend-item">
+                  <div class="legend-dot diesel"></div> Diésel
+                </div>
               </div>
             </div>
             
-            <!-- WHOLESALERS PRICE TABLE PANEL -->
-            <div class="glass-panel">
-              <div class="panel-header">
-                <div class="panel-title">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                  </svg>
-                  Precios por Mayorista (DACO)
-                </div>
+            <!-- INTERACTIVE SVG CHART -->
+            <div class="chart-container" id="svg-chart-container">
+              <!-- SVG content generated by index.js -->
+            </div>
+          </div>
+          
+          <!-- WHOLESALERS PRICES (VERTICAL LIST) -->
+          <div class="glass-panel" style="width: 100%; padding: 0.75rem 1rem !important;">
+            <div class="panel-header" style="margin-bottom: 0.5rem !important;">
+              <div class="panel-title" style="font-size: 0.85rem !important;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                </svg>
+                Precios Mayoristas Oficiales (DACO)
               </div>
-              <div class="wholesaler-table-wrapper">
-                <table class="wholesaler-table">
-                  <thead>
-                    <tr>
-                      <th>Mayorista</th>
-                      <th>Regular</th>
-                      <th>Premium</th>
-                      <th>Diésel</th>
-                    </tr>
-                  </thead>
-                  <tbody id="wholesalers-table-body">
-                    <!-- Loaded dynamically in JS -->
-                  </tbody>
-                </table>
-              </div>
+              <span style="font-size: 0.65rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px;">Distribución Oficial</span>
+            </div>
+            
+            <div class="wholesalers-vertical-container" id="wholesalers-vertical-container">
+              <!-- Loaded dynamically in JS as vertical cards -->
+            </div>
+          </div>
             </div>
           </div>
           
@@ -436,6 +401,15 @@
       </div>
       <form id="report-form" onsubmit="handleReportSubmit(event)">
         <div class="modal-body">
+          <!-- GPS AUTO-DETECTION BUTTON -->
+          <button type="button" class="btn-secondary" id="btn-gps-detect" onclick="detectGPSLocation()" style="width: 100%; margin-bottom: 1.25rem; border-color: var(--color-regular); color: var(--color-regular); display: flex; align-items: center; justify-content: center; gap: 0.5rem; background-color: rgba(16, 185, 129, 0.05); font-weight: 700; transition: var(--transition-fast);">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:16px; height:16px;">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span id="gps-btn-text">📍 Auto-detectar Gasolinera por GPS</span>
+          </button>
+          <div id="gps-detection-status" style="font-size: 0.75rem; color: var(--color-regular); margin-bottom: 1.25rem; display: none; text-align: center; font-weight: 700; background-color: var(--color-regular-glow); padding: 0.5rem; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.2);"></div>
+
           <div class="calc-group">
             <label for="rep-station-name">Nombre de la Estación *</label>
             <input type="text" class="form-control" id="rep-station-name" placeholder="Ej. Puma Torrimar, Gulf Los Filtros" required style="padding-left: 1rem;">

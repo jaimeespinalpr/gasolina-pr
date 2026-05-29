@@ -3,12 +3,10 @@
 // ==========================================
 
 // --- State ---
-let globalUnit = 'L'; // 'L' = Liters, 'G' = Gallons
 let searchQuery = '';
 let selectedMunicipality = '';
 let selectedBrand = '';
 let stations = [];
-let updatingStationId = null; // Track if we are editing an existing station
 let selectedPhotoUrl = null; // Track loaded evidence photo URL
 
 // --- Conversion Factor ---
@@ -33,7 +31,7 @@ const wholesalersData = [
   { name: 'Ecomaxx', regular: 108.7, premium: 118.7, diesel: 120.7 }
 ];
 
-// --- Seed Data: Gas Stations in Puerto Rico ---
+// --- Seed Data: Gas Stations in Puerto Rico (mapped with GPS Coordinates) ---
 const defaultStations = [
   {
     id: 'st-1',
@@ -43,7 +41,8 @@ const defaultStations = [
     address: 'Ave. Esmeralda #42',
     prices: { regular: 108.7, premium: 119.7, diesel: 120.7 },
     reportedAt: 'Hace 2 horas',
-    isCommunity: false
+    isCommunity: false,
+    coords: { lat: 18.3789, lon: -66.1112 }
   },
   {
     id: 'st-2',
@@ -53,17 +52,19 @@ const defaultStations = [
     address: 'Carr. 177 Km 3.2',
     prices: { regular: 107.7, premium: 116.7, diesel: 119.7 },
     reportedAt: 'Hace 1 hora',
-    isCommunity: false
+    isCommunity: false,
+    coords: { lat: 18.3812, lon: -66.1287 }
   },
   {
     id: 'st-3',
     name: 'TotalEnergies San Patricio',
     brand: 'Total',
     municipality: 'Guaynabo',
-    address: 'Ave. Roosevelt Esq. San Patricio',
+    address: 'Roosevelt Esq. San Patricio',
     prices: { regular: 109.7, premium: 122.7, diesel: 121.7 },
     reportedAt: 'Hace 3 horas',
-    isCommunity: false
+    isCommunity: false,
+    coords: { lat: 18.4110, lon: -66.0968 }
   },
   {
     id: 'st-4',
@@ -73,17 +74,19 @@ const defaultStations = [
     address: 'Carr. 176, Río Piedras',
     prices: { regular: 107.9, premium: 115.9, diesel: 119.9 },
     reportedAt: 'Hace 4 horas',
-    isCommunity: false
+    isCommunity: false,
+    coords: { lat: 18.3615, lon: -66.0792 }
   },
   {
     id: 'st-5',
     name: 'Shell Roosevelt',
     brand: 'Shell',
     municipality: 'San Juan',
-    address: 'Ave. Franklin D. Roosevelt #382',
+    address: 'Ave. Roosevelt #382',
     prices: { regular: 110.7, premium: 124.7, diesel: 122.7 },
     reportedAt: 'Hace 5 horas',
-    isCommunity: false
+    isCommunity: false,
+    coords: { lat: 18.4234, lon: -66.0754 }
   },
   {
     id: 'st-6',
@@ -93,7 +96,8 @@ const defaultStations = [
     address: 'Ave. Las Cumbres #105',
     prices: { regular: 109.7, premium: 122.7, diesel: 120.7 },
     reportedAt: 'Hace 30 mins',
-    isCommunity: false
+    isCommunity: false,
+    coords: { lat: 18.3712, lon: -66.0888 }
   },
   {
     id: 'st-7',
@@ -103,7 +107,8 @@ const defaultStations = [
     address: 'Ave. Central Esq. Piñero',
     prices: { regular: 107.7, premium: 117.7, diesel: 119.7 },
     reportedAt: 'Hace 6 horas',
-    isCommunity: false
+    isCommunity: false,
+    coords: { lat: 18.4145, lon: -66.0694 }
   },
   {
     id: 'st-8',
@@ -113,7 +118,8 @@ const defaultStations = [
     address: 'Carr. 167 Km 15.2',
     prices: { regular: 110.7, premium: 124.7, diesel: 122.7 },
     reportedAt: 'Hace 12 horas',
-    isCommunity: false
+    isCommunity: false,
+    coords: { lat: 18.3745, lon: -66.1712 }
   },
   {
     id: 'st-9',
@@ -123,7 +129,8 @@ const defaultStations = [
     address: 'Ave. Luis Muñoz Marín',
     prices: { regular: 108.7, premium: 118.7, diesel: 120.7 },
     reportedAt: 'Hace 7 horas',
-    isCommunity: false
+    isCommunity: false,
+    coords: { lat: 18.2324, lon: -66.0468 }
   },
   {
     id: 'st-10',
@@ -133,7 +140,8 @@ const defaultStations = [
     address: 'Ponce ByPass, Ave. Tito Castro',
     prices: { regular: 108.7, premium: 120.7, diesel: 120.7 },
     reportedAt: 'Hace 8 horas',
-    isCommunity: false
+    isCommunity: false,
+    coords: { lat: 18.0124, lon: -66.5987 }
   },
   {
     id: 'st-11',
@@ -143,7 +151,8 @@ const defaultStations = [
     address: 'Carr. #2 Km 114.5',
     prices: { regular: 107.9, premium: 117.9, diesel: 119.9 },
     reportedAt: 'Hace 9 horas',
-    isCommunity: false
+    isCommunity: false,
+    coords: { lat: 18.2145, lon: -67.1412 }
   },
   {
     id: 'st-12',
@@ -153,7 +162,8 @@ const defaultStations = [
     address: 'Ave. 65 de Infantería',
     prices: { regular: 110.7, premium: 123.7, diesel: 122.7 },
     reportedAt: 'Hace 10 horas',
-    isCommunity: false
+    isCommunity: false,
+    coords: { lat: 18.3812, lon: -65.9687 }
   },
   {
     id: 'st-13',
@@ -163,7 +173,8 @@ const defaultStations = [
     address: 'Carr. 693 Km 8.5',
     prices: { regular: 111.7, premium: 126.7, diesel: 123.7 },
     reportedAt: 'Hace 1 hora',
-    isCommunity: false
+    isCommunity: false,
+    coords: { lat: 18.4712, lon: -66.2754 }
   },
   {
     id: 'st-14',
@@ -173,7 +184,8 @@ const defaultStations = [
     address: 'Carr. 129 Km 4.2',
     prices: { regular: 107.7, premium: 121.7, diesel: 120.7 },
     reportedAt: 'Hace 23 horas',
-    isCommunity: false
+    isCommunity: false,
+    coords: { lat: 18.4512, lon: -66.7412 }
   },
   {
     id: 'st-15',
@@ -183,7 +195,8 @@ const defaultStations = [
     address: 'Ave. Font Martelo #115',
     prices: { regular: 110.7, premium: 128.7, diesel: 126.7 },
     reportedAt: 'Hace 1 día',
-    isCommunity: false
+    isCommunity: false,
+    coords: { lat: 18.1512, lon: -65.8287 }
   }
 ];
 
@@ -255,8 +268,8 @@ function navigateTo(sectionId) {
     titleText.textContent = 'Precios de Combustible';
     subtitleText.textContent = 'Monitoreo oficial y comunitario en Puerto Rico';
   } else if (sectionId === 'directory') {
-    titleText.textContent = 'Directorio de Gasolineras';
-    subtitleText.textContent = 'Compara los precios actualizados cerca de ti';
+    titleText.textContent = 'Precios en Bomba';
+    subtitleText.textContent = 'Visualiza los precios y actualiza la bomba en tiempo real';
   } else if (sectionId === 'calculators') {
     titleText.textContent = 'Herramientas de Ahorro';
     subtitleText.textContent = 'Calcula costos de llenado y convierte medidas al instante';
@@ -266,48 +279,13 @@ function navigateTo(sectionId) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// --- Unit Management (Liters vs Gallons) ---
-function setGlobalUnit(unit) {
-  globalUnit = unit;
-  
-  // Toggle active class on unit buttons
-  document.querySelectorAll('.unit-btn').forEach(btn => {
-    btn.classList.remove('active');
-  });
-  
-  if (unit === 'L') {
-    document.getElementById('unit-l').classList.add('active');
-  } else {
-    document.getElementById('unit-g').classList.add('active');
-  }
-  
-  // Re-render everything with new units
-  renderDashboard();
-  renderWholesalers();
-  renderStationsGrid();
-  calculateTankFill();
-  
-  // Re-calculate the converter summary
-  const currentLitersVal = document.getElementById('calc-liters').value;
-  if (currentLitersVal) {
-    convertLitersToGallons(currentLitersVal);
-  }
-}
-
-// --- Formatting Helpers ---
+// --- Formatting Helpers (Always in Liters) ---
 function formatPrice(priceInCentsL) {
-  if (globalUnit === 'L') {
-    // Return dollars per Liter: $1.097
-    return `$${(priceInCentsL / 100).toFixed(3)}`;
-  } else {
-    // Return dollars per Gallon: $4.152
-    const pricePerGallon = (priceInCentsL * LITERS_PER_GALLON) / 100;
-    return `$${pricePerGallon.toFixed(3)}`;
-  }
+  return `$${(priceInCentsL / 100).toFixed(3)}`;
 }
 
 function getUnitLabel() {
-  return globalUnit === 'L' ? '/L' : '/Gal';
+  return '/L';
 }
 
 // --- Calculate Average Fuel Prices ---
@@ -330,56 +308,47 @@ function getAverages() {
 
 // --- Render Dashboard UI ---
 function renderDashboard() {
-  const avgs = getAverages();
-  
-  // Render Averages
-  document.getElementById('avg-regular-display').innerHTML = `${formatPrice(avgs.regular)} <span class="unit">${getUnitLabel()}</span>`;
-  document.getElementById('avg-premium-display').innerHTML = `${formatPrice(avgs.premium)} <span class="unit">${getUnitLabel()}</span>`;
-  document.getElementById('avg-diesel-display').innerHTML = `${formatPrice(avgs.diesel)} <span class="unit">${getUnitLabel()}</span>`;
-
-  // Render DACO Ranges
-  if (globalUnit === 'L') {
-    document.getElementById('range-regular-display').textContent = '107.7¢ - 111.7¢';
-    document.getElementById('range-premium-display').textContent = '115.7¢ - 128.7¢';
-    document.getElementById('range-diesel-display').textContent = '119.7¢ - 128.7¢';
-  } else {
-    const minRegG = (107.7 * LITERS_PER_GALLON) / 100;
-    const maxRegG = (111.7 * LITERS_PER_GALLON) / 100;
-    const minPremG = (115.7 * LITERS_PER_GALLON) / 100;
-    const maxPremG = (128.7 * LITERS_PER_GALLON) / 100;
-    const minDslG = (119.7 * LITERS_PER_GALLON) / 100;
-    const maxDslG = (128.7 * LITERS_PER_GALLON) / 100;
-
-    document.getElementById('range-regular-display').textContent = `$${minRegG.toFixed(2)} - $${maxRegG.toFixed(2)}`;
-    document.getElementById('range-premium-display').textContent = `$${minPremG.toFixed(2)} - $${maxPremG.toFixed(2)}`;
-    document.getElementById('range-diesel-display').textContent = `$${minDslG.toFixed(2)} - $${maxDslG.toFixed(2)}`;
-  }
+  // Render DACO Ranges (Litro)
+  document.getElementById('range-regular-display').textContent = '107.7¢ - 111.7¢';
+  document.getElementById('range-premium-display').textContent = '115.7¢ - 128.7¢';
+  document.getElementById('range-diesel-display').textContent = '119.7¢ - 128.7¢';
 }
 
-// --- Render Wholesalers Table ---
+// --- Render Wholesalers List (Vertical Cards) ---
 function renderWholesalers() {
-  const tbody = document.getElementById('wholesalers-table-body');
-  tbody.innerHTML = '';
+  const container = document.getElementById('wholesalers-vertical-container');
+  if (!container) return;
+  container.innerHTML = '';
   
   wholesalersData.forEach(row => {
-    const tr = document.createElement('tr');
+    const card = document.createElement('div');
+    card.className = 'wholesaler-vertical-card';
     
     // Get color indicator
     const colorHash = stringToHsl(row.name);
     
-    tr.innerHTML = `
-      <td>
-        <div class="brand-tag">
-          <div class="brand-dot" style="background-color: ${colorHash};"></div>
-          <strong>${row.name}</strong>
+    card.innerHTML = `
+      <div class="wholesaler-brand-info">
+        <div class="brand-dot" style="background-color: ${colorHash};"></div>
+        <strong>${row.name}</strong>
+      </div>
+      <div class="wholesaler-prices-group">
+        <div class="wholesaler-price-item">
+          <span>Reg:</span>
+          <strong>${formatPrice(row.regular)}</strong>
         </div>
-      </td>
-      <td>${formatPrice(row.regular)}</td>
-      <td>${formatPrice(row.premium)}</td>
-      <td>${formatPrice(row.diesel)}</td>
+        <div class="wholesaler-price-item">
+          <span>Prem:</span>
+          <strong>${formatPrice(row.premium)}</strong>
+        </div>
+        <div class="wholesaler-price-item">
+          <span>Dsl:</span>
+          <strong>${formatPrice(row.diesel)}</strong>
+        </div>
+      </div>
     `;
     
-    tbody.appendChild(tr);
+    container.appendChild(card);
   });
 }
 
@@ -419,6 +388,7 @@ function renderStationsGrid() {
   filtered.forEach(station => {
     const card = document.createElement('div');
     card.className = 'station-card';
+    card.id = `card-${station.id}`;
     
     const isCheapest = station.prices.regular === cheapestReg;
     const cheapestBadge = isCheapest ? `<span class="fuel-badge" style="background-color: var(--color-regular-glow); color: var(--color-regular); font-size: 0.65rem; padding: 0.25rem 0.5rem; margin-left: 0.5rem;">Más Barata</span>` : '';
@@ -458,7 +428,7 @@ function renderStationsGrid() {
             <div class="station-title">${station.name} ${cheapestBadge}</div>
             <div class="station-meta" style="margin-bottom: 0;">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
               </svg>
               <span>${station.municipality} ${station.address ? `• ${station.address}` : ''}</span>
             </div>
@@ -500,16 +470,39 @@ function renderStationsGrid() {
       <div class="station-footer" style="padding-bottom: 1rem;">
         <div class="station-reported-badge">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <span>${station.reportedAt}</span>
         </div>
-        ${station.isCommunity ? `<span style="color: var(--color-accent); font-weight: 600; font-size: 0.7rem;">Reporte de Usuario</span>` : `<span style="color: var(--text-muted); font-size: 0.7rem;">Verificado</span>`}
+        ${station.isCommunity ? `<span style="color: var(--color-accent); font-weight: 600; font-size: 0.7rem;">Comunidad</span>` : `<span style="color: var(--text-muted); font-size: 0.7rem;">Verificado</span>`}
       </div>
 
-      <div class="card-actions-wrapper ${hasViolation ? '' : 'single'}">
+      <!-- COLLAPSIBLE RAPID INLINE PRICE EDITOR -->
+      <div class="inline-price-editor" id="editor-${station.id}" style="display:none; margin-top: 0.5rem; border-top: 1px dashed var(--border-color); padding-top: 1rem; margin-bottom: 1rem;">
+        <h4 style="font-size:0.75rem; font-family:var(--font-title); color:var(--text-secondary); margin-bottom:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Actualización Rápida (¢/Litro)</h4>
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:0.5rem; margin-bottom:0.75rem;">
+          <div>
+            <label style="font-size:0.6rem; color:var(--color-regular); font-weight:700; display:block; margin-bottom:0.25rem; text-transform:uppercase;">Regular</label>
+            <input type="number" step="0.1" class="form-control" id="inline-reg-${station.id}" value="${station.prices.regular}" style="padding:0.4rem 0.5rem; padding-left:0.5rem; font-size:0.85rem; text-align:center;">
+          </div>
+          <div>
+            <label style="font-size:0.6rem; color:var(--color-premium); font-weight:700; display:block; margin-bottom:0.25rem; text-transform:uppercase;">Premium</label>
+            <input type="number" step="0.1" class="form-control" id="inline-prem-${station.id}" value="${station.prices.premium}" style="padding:0.4rem 0.5rem; padding-left:0.5rem; font-size:0.85rem; text-align:center;">
+          </div>
+          <div>
+            <label style="font-size:0.6rem; color:var(--color-diesel); font-weight:700; display:block; margin-bottom:0.25rem; text-transform:uppercase;">Diésel</label>
+            <input type="number" step="0.1" class="form-control" id="inline-dsl-${station.id}" value="${station.prices.diesel}" style="padding:0.4rem 0.5rem; padding-left:0.5rem; font-size:0.85rem; text-align:center;">
+          </div>
+        </div>
+        <div style="display:flex; gap:0.5rem;">
+          <button class="btn-card-action" onclick="toggleInlineEditor('${station.id}')" style="flex:1; padding:0.4rem 0.5rem;">Cancelar</button>
+          <button class="btn-primary" onclick="saveInlinePrices('${station.id}')" style="flex:2; padding:0.4rem 0.75rem; font-size:0.75rem; justify-content:center;">Guardar</button>
+        </div>
+      </div>
+
+      <div class="card-actions-wrapper ${hasViolation ? '' : 'single'}" id="actions-container-${station.id}">
         ${hasViolation ? `<button class="btn-card-action danger" onclick="openComplaintModal('${station.id}')">Radicar Querella</button>` : ''}
-        <button class="btn-card-action" onclick="openQuickUpdate('${station.id}')">
+        <button class="btn-card-action" onclick="toggleInlineEditor('${station.id}')" id="btn-toggle-${station.id}">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:12px; height:12px;"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
           Actualizar Bomba
         </button>
@@ -518,6 +511,59 @@ function renderStationsGrid() {
     
     container.appendChild(card);
   });
+}
+
+// --- Toggle Collapsible Price Editor ---
+function toggleInlineEditor(stationId) {
+  const editor = document.getElementById(`editor-${stationId}`);
+  const actions = document.getElementById(`actions-container-${stationId}`);
+  
+  if (editor.style.display === 'none') {
+    // Hide all other active editors first to keep layout clean
+    document.querySelectorAll('.inline-price-editor').forEach(el => {
+      el.style.display = 'none';
+    });
+    document.querySelectorAll('.card-actions-wrapper').forEach(el => {
+      el.style.display = 'grid';
+    });
+    
+    editor.style.display = 'block';
+    actions.style.display = 'none'; // Temporarily hide the card actions
+    
+    // Focus the first input (regular)
+    document.getElementById(`inline-reg-${stationId}`).focus();
+  } else {
+    editor.style.display = 'none';
+    actions.style.display = 'grid';
+  }
+}
+
+// --- Save Prices from Inline Card Editor ---
+function saveInlinePrices(stationId) {
+  const priceReg = parseFloat(document.getElementById(`inline-reg-${stationId}`).value);
+  const pricePrem = parseFloat(document.getElementById(`inline-prem-${stationId}`).value);
+  const priceDsl = parseFloat(document.getElementById(`inline-dsl-${stationId}`).value);
+  
+  if (isNaN(priceReg) || isNaN(pricePrem) || isNaN(priceDsl)) {
+    showToast('Por favor, ingresa precios numéricos válidos en bomba.', 'error');
+    return;
+  }
+  
+  const index = stations.findIndex(s => s.id === stationId);
+  if (index !== -1) {
+    stations[index].prices = { regular: priceReg, premium: pricePrem, diesel: priceDsl };
+    stations[index].reportedAt = 'Actualizado hace unos instantes';
+    stations[index].isCommunity = true;
+    
+    localStorage.setItem('gasolinapr_stations', JSON.stringify(stations));
+    
+    // Refresh GUI
+    renderDashboard();
+    renderStationsGrid();
+    populateStationSelects();
+    
+    showToast(`¡Bomba de ${stations[index].name} actualizada en vivo!`, 'success');
+  }
 }
 
 // --- Get Filtered Stations List ---
@@ -645,9 +691,106 @@ function calculateTankFill() {
   }
 }
 
+// ==========================================
+// GPS Geolocation Auto-Detection
+// ==========================================
+function detectGPSLocation() {
+  const btn = document.getElementById('btn-gps-detect');
+  const text = document.getElementById('gps-btn-text');
+  const statusDiv = document.getElementById('gps-detection-status');
+  
+  btn.disabled = true;
+  text.textContent = '📍 Escaneando satélites GPS...';
+  statusDiv.style.display = 'none';
+  
+  const options = {
+    enableHighAccuracy: true,
+    timeout: 5000,
+    maximumAge: 0
+  };
+  
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        processCoordinates(lat, lon);
+      },
+      (error) => {
+        // Fallback simulation if permission blocked or local context restrict
+        console.warn(`Geolocation error: ${error.message}. Running robust mock GPS fallback...`);
+        setTimeout(() => {
+          // Simulate San Juan coordinate: 18.3750, -66.0850 (close to Puma Las Cumbres)
+          processCoordinates(18.3720, -66.0890);
+        }, 1200);
+      },
+      options
+    );
+  } else {
+    // Geolocation not supported, fall back
+    setTimeout(() => {
+      processCoordinates(18.3720, -66.0890);
+    }, 1000);
+  }
+}
+
+// Process GPS Coordinates to find the closest seed station
+function processCoordinates(lat, lon) {
+  const btn = document.getElementById('btn-gps-detect');
+  const text = document.getElementById('gps-btn-text');
+  const statusDiv = document.getElementById('gps-detection-status');
+  
+  // Find station with minimum distance
+  let minDistance = Infinity;
+  let closestStation = null;
+  
+  stations.forEach(station => {
+    if (station.coords) {
+      // Euclidean distance mapping
+      const distance = Math.sqrt(Math.pow(station.coords.lat - lat, 2) + Math.pow(station.coords.lon - lon, 2));
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestStation = station;
+      }
+    }
+  });
+  
+  // Restore button state
+  btn.disabled = false;
+  text.textContent = '📍 Auto-detectar Gasolinera por GPS';
+  
+  if (closestStation) {
+    // Euclidean to approximate meters: 1 deg ~ 111.3 km
+    const meters = Math.round(minDistance * 111.3 * 1000);
+    
+    // Auto fill form fields!
+    document.getElementById('rep-station-name').value = closestStation.name;
+    document.getElementById('rep-brand').value = closestStation.brand;
+    document.getElementById('rep-municipality').value = closestStation.municipality;
+    document.getElementById('rep-address').value = closestStation.address || '';
+    
+    // Pre-fill prices to make updates extremely fast!
+    document.getElementById('rep-price-regular').value = closestStation.prices.regular;
+    document.getElementById('rep-price-premium').value = closestStation.prices.premium;
+    document.getElementById('rep-price-diesel').value = closestStation.prices.diesel;
+    
+    // Render status box
+    statusDiv.style.display = 'block';
+    statusDiv.innerHTML = `
+      📍 Estación Detectada: <strong>${closestStation.name}</strong><br>
+      Municipio: ${closestStation.municipality} • Distancia: ~${meters} metros.<br>
+      <span style="font-size:0.65rem; color:var(--text-muted);">¡Campos del formulario pre-seleccionados! Solo edita el precio si cambió.</span>
+    `;
+    
+    showToast(`📍 Detectada: ${closestStation.name} (${meters}m)`, 'success');
+  } else {
+    // If no stations mapped, pick standard fallback
+    showToast('No se encontraron gasolineras mapeadas cerca de ti.', 'error');
+  }
+}
+
 // --- Modal Controls ---
 function openReportModal() {
-  updatingStationId = null; // Clear edit track
   document.querySelector('#report-modal .modal-title').textContent = 'Reportar Precios en Bomba';
   const modal = document.getElementById('report-modal');
   modal.classList.add('active');
@@ -659,30 +802,6 @@ function closeReportModal() {
   modal.classList.remove('active');
   document.body.style.overflow = '';
   document.getElementById('report-form').reset();
-  updatingStationId = null;
-}
-
-// --- Open Quick Station Update ---
-function openQuickUpdate(stationId) {
-  const station = stations.find(s => s.id === stationId);
-  if (!station) return;
-  
-  updatingStationId = stationId; // Track updating ID
-  
-  // Pre-fill form values
-  document.getElementById('rep-station-name').value = station.name;
-  document.getElementById('rep-brand').value = station.brand;
-  document.getElementById('rep-municipality').value = station.municipality;
-  document.getElementById('rep-address').value = station.address || '';
-  document.getElementById('rep-price-regular').value = station.prices.regular;
-  document.getElementById('rep-price-premium').value = station.prices.premium;
-  document.getElementById('rep-price-diesel').value = station.prices.diesel;
-  
-  document.querySelector('#report-modal .modal-title').textContent = `Actualizar Bomba: ${station.name}`;
-  
-  const modal = document.getElementById('report-modal');
-  modal.classList.add('active');
-  document.body.style.overflow = 'hidden';
 }
 
 function handleReportSubmit(e) {
@@ -702,39 +821,23 @@ function handleReportSubmit(e) {
     return;
   }
   
-  if (updatingStationId) {
-    // Edit existing station
-    const index = stations.findIndex(s => s.id === updatingStationId);
-    if (index !== -1) {
-      stations[index].name = name;
-      stations[index].brand = brand;
-      stations[index].municipality = municipality;
-      stations[index].address = address;
-      stations[index].prices = { regular: priceReg, premium: pricePrem, diesel: priceDsl };
-      stations[index].reportedAt = 'Actualizado hace unos instantes';
-      stations[index].isCommunity = true;
-      
-      showToast('¡Bomba de gasolina actualizada con éxito!', 'success');
-    }
-  } else {
-    // Add new station to top of list
-    const newStation = {
-      id: `custom-${Date.now()}`,
-      name,
-      brand,
-      municipality,
-      address,
-      prices: {
-        regular: priceReg,
-        premium: pricePrem,
-        diesel: priceDsl
-      },
-      reportedAt: 'Hace unos instantes',
-      isCommunity: true
-    };
-    stations.unshift(newStation);
-    showToast('¡Reporte guardado con éxito! Gracias por colaborar con la comunidad.', 'success');
-  }
+  // Add new station to top of list
+  const newStation = {
+    id: `custom-${Date.now()}`,
+    name,
+    brand,
+    municipality,
+    address,
+    prices: {
+      regular: priceReg,
+      premium: pricePrem,
+      diesel: priceDsl
+    },
+    reportedAt: 'Hace unos instantes',
+    isCommunity: true
+  };
+  stations.unshift(newStation);
+  showToast('¡Reporte guardado con éxito! Gracias por colaborar con la comunidad.', 'success');
   
   localStorage.setItem('gasolinapr_stations', JSON.stringify(stations));
   
@@ -748,49 +851,6 @@ function handleReportSubmit(e) {
 // ========================================================
 // FAse 2 - DACO Synchronization & Complaints logic
 // ========================================================
-
-// --- Simulate sync with DACO ---
-function syncWithDACO() {
-  const btn = document.getElementById('sync-daco-btn');
-  const text = document.getElementById('sync-btn-text');
-  const svg = document.getElementById('sync-icon-svg');
-  
-  if (btn.disabled) return;
-  
-  btn.disabled = true;
-  text.textContent = 'Sincronizando...';
-  svg.style.transform = 'rotate(720deg)';
-  svg.style.animation = 'spin 1.5s linear infinite';
-  
-  setTimeout(() => {
-    // Restore state
-    btn.disabled = false;
-    text.textContent = 'Sincronizar DACO';
-    svg.style.transform = 'none';
-    svg.style.animation = 'none';
-    
-    // Simulate real updates (reloads default data and aligns averages)
-    stations = stations.map(s => {
-      // Return Community inputs, but slightly update verified stations to show synched state
-      if (!s.isCommunity) {
-        // Mock minor daily adjustments within DACO limits
-        const devReg = (Math.random() * 0.8 - 0.4);
-        s.prices.regular = parseFloat((s.prices.regular + devReg).toFixed(1));
-        s.reportedAt = 'Sincronizado con daco.pr.gov hace unos instantes';
-      }
-      return s;
-    });
-    
-    localStorage.setItem('gasolinapr_stations', JSON.stringify(stations));
-    
-    // Refresh GUI
-    renderDashboard();
-    renderStationsGrid();
-    populateStationSelects();
-    
-    showToast('¡Datos en bomba sincronizados con daco.pr.gov exitosamente!', 'success');
-  }, 1500);
-}
 
 // --- Radicar Querella Form Actions ---
 function openComplaintModal(stationId) {
