@@ -40,21 +40,23 @@
 }
 
 body.light-theme {
-  --bg-primary: #f8fafc;
-  --bg-secondary: #ffffff;
-  --bg-card: rgba(255, 255, 255, 0.9);
-  --bg-card-hover: rgba(241, 245, 249, 0.95);
-  --border-color: rgba(15, 23, 42, 0.08);
-  --border-color-hover: rgba(15, 23, 42, 0.15);
+  --bg-primary: #ffffff !important;
+  --bg-secondary: #f8fafc !important;
+  --bg-card: #ffffff !important;
+  --bg-card-hover: #f1f5f9 !important;
+  --border-color: #e2e8f0 !important;
+  --border-color-hover: #cbd5e1 !important;
   
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #64748b;
+  --text-primary: #0f172a !important;
+  --text-secondary: #334155 !important;
+  --text-muted: #64748b !important;
   
-  --color-regular-glow: rgba(16, 185, 129, 0.08);
-  --color-premium-glow: rgba(245, 158, 11, 0.08);
-  --color-diesel-glow: rgba(14, 165, 233, 0.08);
-  --color-accent-glow: rgba(99, 102, 241, 0.08);
+  --color-regular-glow: rgba(16, 185, 129, 0.08) !important;
+  --color-premium-glow: rgba(245, 158, 11, 0.08) !important;
+  --color-diesel-glow: rgba(14, 165, 233, 0.08) !important;
+  --color-accent-glow: rgba(99, 102, 241, 0.08) !important;
+  
+  background-image: none !important;
 }
 
 body.light-theme .nav-link.active,

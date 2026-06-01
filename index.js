@@ -1808,6 +1808,9 @@ function toggleTheme() {
   
   localStorage.setItem('gasolinapr_theme', newTheme);
   updateThemeButton(newTheme);
+  
+  // Redraw SVG chart to adapt grid colors/fonts instantly
+  renderSVGChart();
 }
 
 function updateThemeButton(theme) {
