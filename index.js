@@ -9,6 +9,10 @@ let selectedBrand = '';
 let stations = [];
 let selectedPhotoUrl = null; // Track loaded evidence photo URL
 
+// --- Build / Live Refresh ---
+const APP_BUILD_VERSION = '2026-06-01T16:04:20Z';
+const LIVE_RELOAD_POLL_MS = 15000;
+
 // --- Conversion Factor ---
 const LITERS_PER_GALLON = 3.78541;
 
@@ -246,6 +250,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderStationsGrid();
   populateStationSelects();
   renderSVGChart();
+  startLiveReloadWatcher();
   
   // Set up default values in converter
   document.getElementById('calc-liters').value = 40;
@@ -386,6 +391,29 @@ function updateTrendIndicator(prefix, current, previous) {
   }
   if (icon) icon.textContent = trend.icon;
   if (text) text.textContent = trend.label;
+}
+
+async function checkForRemoteBuildUpdate() {
+  try {
+    const response = await fetch(`index.js?ts=${Date.now()}`, { cache: 'no-store' });
+    if (!response.ok) return;
+
+    const remoteJs = await response.text();
+    const match = remoteJs.match(/const APP_BUILD_VERSION = ['\"]([^'\"]+)['\"]/);
+    const remoteVersion = match && match[1];
+
+    if (remoteVersion && remoteVersion !== APP_BUILD_VERSION) {
+      window.location.reload();
+    }
+  } catch (error) {
+    // Silent by design: if the check fails, the app still works normally.
+  }
+}
+
+function startLiveReloadWatcher() {
+  if (window.__gasolinaPrLiveReloadStarted) return;
+  window.__gasolinaPrLiveReloadStarted = true;
+  setInterval(checkForRemoteBuildUpdate, LIVE_RELOAD_POLL_MS);
 }
 
 // --- Calculate Average Fuel Prices ---
