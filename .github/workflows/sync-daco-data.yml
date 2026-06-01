@@ -1,0 +1,42 @@
+name: Sync DACO gasoline data
+
+on:
+  schedule:
+    # Puerto Rico is UTC-4 year-round. Run three times a day at 9am, 1pm, 5pm AST.
+    - cron: '0 13 * * *'
+    - cron: '0 17 * * *'
+    - cron: '0 21 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync-daco-data:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Update DACO data file
+        run: python3 scripts/update_daco_data.py
+
+      - name: Commit updated DACO data
+        run: |
+          if git diff --quiet -- daco-data.json; then
+            echo "No DACO changes detected."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add daco-data.json
+          git commit -m "chore: sync DACO gasoline data"
+          git push origin HEAD:main

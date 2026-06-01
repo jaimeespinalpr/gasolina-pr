@@ -12,6 +12,18 @@ let selectedPhotoUrl = null; // Track loaded evidence photo URL
 // --- Build / Live Refresh ---
 const APP_BUILD_VERSION = '2026-06-01T16:04:20Z';
 const LIVE_RELOAD_POLL_MS = 15000;
+const DEFAULT_DACO_DATA = {
+  source_url: 'https://www.daco.pr.gov/',
+  official_page_updated_at: '1 de junio de 2026',
+  last_scraped_at: APP_BUILD_VERSION,
+  prices: {
+    regular: { low: 105.7, high: 109.7, mid: 107.7 },
+    premium: { low: 115.7, high: 126.7, mid: 121.2 },
+    diesel: { low: 117.7, high: 126.7, mid: 122.2 }
+  },
+  history: []
+};
+let dacoData = JSON.parse(JSON.stringify(DEFAULT_DACO_DATA));
 
 // --- Conversion Factor ---
 const LITERS_PER_GALLON = 3.78541;
@@ -243,8 +255,9 @@ const priceHistory = [
 ];
 
 // --- App Initialization ---
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   loadStations();
+  await loadDacoData();
   renderDashboard();
   renderWholesalers();
   renderStationsGrid();
@@ -395,16 +408,66 @@ function updateTrendIndicator(prefix, current, previous) {
   if (text) text.textContent = trend.label;
 }
 
+function normalizeDacoData(raw) {
+  if (!raw || typeof raw !== 'object') return JSON.parse(JSON.stringify(DEFAULT_DACO_DATA));
+  const merged = JSON.parse(JSON.stringify(DEFAULT_DACO_DATA));
+  merged.source_url = raw.source_url || merged.source_url;
+  merged.official_page_updated_at = raw.official_page_updated_at || merged.official_page_updated_at;
+  merged.last_scraped_at = raw.last_scraped_at || raw.updated_at || merged.last_scraped_at;
+  merged.prices = raw.prices || merged.prices;
+  merged.history = Array.isArray(raw.history) ? raw.history : merged.history;
+  return merged;
+}
+
+async function loadDacoData() {
+  try {
+    const response = await fetch(`daco-data.json?ts=${Date.now()}`, { cache: 'no-store' });
+    if (!response.ok) return dacoData;
+    dacoData = normalizeDacoData(await response.json());
+  } catch (error) {
+    dacoData = JSON.parse(JSON.stringify(DEFAULT_DACO_DATA));
+  }
+  return dacoData;
+}
+
+function getTrendSeries() {
+  if (Array.isArray(dacoData?.history) && dacoData.history.length >= 2) {
+    return dacoData.history.map(entry => ({
+      regular: entry.mid?.regular,
+      premium: entry.mid?.premium,
+      diesel: entry.mid?.diesel
+    }));
+  }
+  return priceHistory;
+}
+
 async function checkForRemoteBuildUpdate() {
   try {
-    const response = await fetch(`index.js?ts=${Date.now()}`, { cache: 'no-store' });
-    if (!response.ok) return;
+    const [jsResponse, dataResponse] = await Promise.all([
+      fetch(`index.js?ts=${Date.now()}`, { cache: 'no-store' }),
+      fetch(`daco-data.json?ts=${Date.now()}`, { cache: 'no-store' })
+    ]);
 
-    const remoteJs = await response.text();
-    const match = remoteJs.match(/const APP_BUILD_VERSION = ['\"]([^'\"]+)['\"]/);
-    const remoteVersion = match && match[1];
+    let shouldReload = false;
 
-    if (remoteVersion && remoteVersion !== APP_BUILD_VERSION) {
+    if (jsResponse.ok) {
+      const remoteJs = await jsResponse.text();
+      const match = remoteJs.match(/const APP_BUILD_VERSION = ['\"]([^'\"]+)['\"]/);
+      const remoteVersion = match && match[1];
+      if (remoteVersion && remoteVersion !== APP_BUILD_VERSION) {
+        shouldReload = true;
+      }
+    }
+
+    if (dataResponse.ok) {
+      const remoteData = await dataResponse.json();
+      const remoteDataVersion = remoteData.last_scraped_at || remoteData.updated_at;
+      if (remoteDataVersion && remoteDataVersion !== dacoData.last_scraped_at) {
+        shouldReload = true;
+      }
+    }
+
+    if (shouldReload) {
       window.location.reload();
     }
   } catch (error) {
@@ -439,12 +502,19 @@ function getAverages() {
 // --- Render Dashboard UI ---
 function renderDashboard() {
   // Render DACO Ranges (Litro)
-  document.getElementById('range-regular-display').textContent = '107.7¢ - 111.7¢';
-  document.getElementById('range-premium-display').textContent = '115.7¢ - 128.7¢';
-  document.getElementById('range-diesel-display').textContent = '119.7¢ - 128.7¢';
+  const currentPrices = dacoData?.prices || DEFAULT_DACO_DATA.prices;
+  document.getElementById('range-regular-display').textContent = `${currentPrices.regular.low.toFixed(1)}¢ - ${currentPrices.regular.high.toFixed(1)}¢`;
+  document.getElementById('range-premium-display').textContent = `${currentPrices.premium.low.toFixed(1)}¢ - ${currentPrices.premium.high.toFixed(1)}¢`;
+  document.getElementById('range-diesel-display').textContent = `${currentPrices.diesel.low.toFixed(1)}¢ - ${currentPrices.diesel.high.toFixed(1)}¢`;
 
-  const latestHistory = priceHistory[priceHistory.length - 1];
-  const previousHistory = priceHistory[priceHistory.length - 2];
+  const badgeStatus = document.getElementById('daco-badge-status');
+  if (badgeStatus) {
+    badgeStatus.textContent = `Actualizado: ${dacoData?.official_page_updated_at || DEFAULT_DACO_DATA.official_page_updated_at}`;
+  }
+
+  const trendSeries = getTrendSeries();
+  const latestHistory = trendSeries[trendSeries.length - 1];
+  const previousHistory = trendSeries[trendSeries.length - 2] || latestHistory;
 
   updateTrendIndicator('regular', latestHistory.regular, previousHistory.regular);
   updateTrendIndicator('premium', latestHistory.premium, previousHistory.premium);
