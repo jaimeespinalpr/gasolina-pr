@@ -11,10 +11,10 @@ if (!fs.existsSync(indexPath)) {
 let content = fs.readFileSync(indexPath, 'utf8');
 
 // Generate slightly random but realistic updates (DACO prices update)
-// Let's modify the limits slightly to simulate daily fluctuations
-const newRegularLimit = parseFloat((110.5 + Math.random() * 2).toFixed(1));
-const newPremiumLimit = parseFloat((127.5 + Math.random() * 2).toFixed(1));
-const newDieselLimit = parseFloat((127.5 + Math.random() * 2).toFixed(1));
+// Let's modify the limits slightly to simulate daily fluctuations while strictly keeping the .7 ending
+const newRegularLimit = parseFloat((110.7 + (Math.floor(Math.random() * 3) - 1)).toFixed(1));
+const newPremiumLimit = parseFloat((122.7 + (Math.floor(Math.random() * 3) - 1)).toFixed(1));
+const newDieselLimit = parseFloat((120.7 + (Math.floor(Math.random() * 3) - 1)).toFixed(1));
 
 console.log(`Syncing DACO Limits AST 1:00 AM: Regular=${newRegularLimit}¢, Premium=${newPremiumLimit}¢, Diesel=${newDieselLimit}¢`);
 
@@ -43,9 +43,9 @@ const originalWholesalers = [
 ];
 
 const updatedWholesalers = originalWholesalers.map(w => {
-  const deltaReg = (Math.random() * 1.6 - 0.8);
-  const deltaPrem = (Math.random() * 1.6 - 0.8);
-  const deltaDsl = (Math.random() * 1.6 - 0.8);
+  const deltaReg = Math.floor(Math.random() * 3) - 1; // -1, 0, or 1
+  const deltaPrem = Math.floor(Math.random() * 3) - 1;
+  const deltaDsl = Math.floor(Math.random() * 3) - 1;
   return {
     name: w.name,
     regular: parseFloat((w.regular + deltaReg).toFixed(1)),

@@ -351,8 +351,7 @@ function getTrendMeta(current, previous) {
 
   const delta = current - previous;
   const deltaAbsVal = Math.abs(delta) / 100;
-  const roundedVal = Math.round(deltaAbsVal * 1000) / 1000;
-  const formattedDelta = roundedVal % 0.01 === 0 ? `$${roundedVal.toFixed(2)}` : `$${roundedVal.toFixed(3)}`;
+  const formattedDelta = `$${deltaAbsVal.toFixed(2)}`;
 
   if (delta > 0) {
     return {
@@ -802,19 +801,10 @@ function saveInlinePrices(stationId) {
     return;
   }
   
-  // Enforce third decimal is 7 (sanitization)
-  let regStr = valReg.toFixed(3);
-  let premStr = valPrem.toFixed(3);
-  let dslStr = valDsl.toFixed(3);
-  
-  valReg = parseFloat(regStr.substring(0, regStr.length - 1) + '7');
-  valPrem = parseFloat(premStr.substring(0, premStr.length - 1) + '7');
-  valDsl = parseFloat(dslStr.substring(0, dslStr.length - 1) + '7');
-  
-  // Convert dollars to centavos (e.g. 1.127 * 100 = 112.7)
-  const priceReg = parseFloat((valReg * 100).toFixed(1));
-  const pricePrem = parseFloat((valPrem * 100).toFixed(1));
-  const priceDsl = parseFloat((valDsl * 100).toFixed(1));
+  // Convert using the robust sanitization function to cents
+  const priceReg = sanitizePriceToCents(valReg);
+  const pricePrem = sanitizePriceToCents(valPrem);
+  const priceDsl = sanitizePriceToCents(valDsl);
   
   const index = stations.findIndex(s => s.id === stationId);
   if (index !== -1) {
@@ -1173,16 +1163,21 @@ function handleReportSubmit(e) {
   const brand = document.getElementById('rep-brand').value;
   const municipality = document.getElementById('rep-municipality').value;
   const address = document.getElementById('rep-address').value;
-  const priceReg = parseFloat(document.getElementById('rep-price-regular').value);
-  const pricePrem = parseFloat(document.getElementById('rep-price-premium').value);
-  const priceDsl = parseFloat(document.getElementById('rep-price-diesel').value);
+  const rawPriceReg = parseFloat(document.getElementById('rep-price-regular').value);
+  const rawPricePrem = parseFloat(document.getElementById('rep-price-premium').value);
+  const rawPriceDsl = parseFloat(document.getElementById('rep-price-diesel').value);
   const violationDesc = document.getElementById('rep-violation-desc').value;
   
   // Basic validation
-  if (!name || isNaN(priceReg) || isNaN(pricePrem) || isNaN(priceDsl)) {
+  if (!name || isNaN(rawPriceReg) || isNaN(rawPricePrem) || isNaN(rawPriceDsl)) {
     showToast('Por favor, llena todos los campos obligatorios correctamente.', 'error');
     return;
   }
+  
+  // Convert using the robust sanitization function to cents (ending in .7)
+  const priceReg = sanitizePriceToCents(rawPriceReg);
+  const pricePrem = sanitizePriceToCents(rawPricePrem);
+  const priceDsl = sanitizePriceToCents(rawPriceDsl);
   
   // Try to find if station exists to update it, or add new one
   let station = stations.find(s => s.name.toLowerCase() === name.toLowerCase());
@@ -1661,10 +1656,14 @@ function processPumpPhoto(stationId, event) {
       const station = stations[index];
       
       // Simulated AI OCR: read numbers on the sign or pump screen (OCR calibration)
-      // Generates minor updates (+/- 0.5¢ or 1¢) to represent actual scanned values
-      const simulatedRegular = parseFloat((station.prices.regular + (Math.random() > 0.5 ? 0.5 : -0.5)).toFixed(1));
-      const simulatedPremium = parseFloat((station.prices.premium + (Math.random() > 0.5 ? 1.0 : -1.0)).toFixed(1));
-      const simulatedDiesel = parseFloat((station.prices.diesel + (Math.random() > 0.5 ? 0.8 : -0.8)).toFixed(1));
+      // Generates minor updates (+/- 1.0¢) to represent actual scanned values
+      const rawRegular = station.prices.regular + (Math.random() > 0.5 ? 1.0 : -1.0);
+      const rawPremium = station.prices.premium + (Math.random() > 0.5 ? 1.0 : -1.0);
+      const rawDiesel = station.prices.diesel + (Math.random() > 0.5 ? 1.0 : -1.0);
+      
+      const simulatedRegular = sanitizePriceToCents(rawRegular);
+      const simulatedPremium = sanitizePriceToCents(rawPremium);
+      const simulatedDiesel = sanitizePriceToCents(rawDiesel);
       
       stations[index].prices = {
         regular: simulatedRegular,
@@ -1695,10 +1694,45 @@ function sanitizeInlinePriceInput(input) {
   let val = parseFloat(input.value);
   if (isNaN(val)) return;
   
+  if (val >= 10) {
+    // If they typed in cents (e.g. 112.7), convert to dollars (1.127)
+    val = val / 100;
+  }
+  
   // Enforce 3 decimal places and replace the thousandth digit with '7'
   let str = val.toFixed(3);
   let adjustedStr = str.substring(0, str.length - 1) + '7';
   input.value = adjustedStr;
+}
+
+// --- Sanitize any user-entered price to cents ending in .7 (e.g., dollar price ending in 7 thousandths) ---
+function sanitizePriceToCents(value) {
+  if (isNaN(value) || value <= 0) return 0;
+  
+  // If the user entered the price in dollars (e.g. 1.12 or 1.127)
+  if (value < 10) {
+    let str = value.toFixed(3);
+    let adjustedStr = str.substring(0, str.length - 1) + '7';
+    let valDollar = parseFloat(adjustedStr);
+    return parseFloat((valDollar * 100).toFixed(1));
+  } else {
+    // If the user entered in cents (e.g. 112 or 112.7)
+    let valDollar = value / 100;
+    let str = valDollar.toFixed(3);
+    let adjustedStr = str.substring(0, str.length - 1) + '7';
+    let valSanitizedDollar = parseFloat(adjustedStr);
+    return parseFloat((valSanitizedDollar * 100).toFixed(1));
+  }
+}
+
+// --- Sanitize and format report price input to always end in '.7' cents ---
+function sanitizeReportPriceInput(input) {
+  let val = parseFloat(input.value);
+  if (isNaN(val)) return;
+  
+  // Convert using the robust sanitization function
+  let centsVal = sanitizePriceToCents(val);
+  input.value = centsVal.toFixed(1);
 }
 
 
