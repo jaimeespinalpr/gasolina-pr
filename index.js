@@ -7,6 +7,7 @@ let searchQuery = '';
 let selectedMunicipality = '';
 let selectedBrand = '';
 let stations = [];
+let lastActiveSection = 'dashboard';
 let selectedPhotoUrl = null; // Track loaded evidence photo URL
 
 // --- Build / Live Refresh ---
@@ -268,7 +269,34 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Set up default values in converter
   document.getElementById('calc-liters').value = 40;
   convertLitersToGallons(40);
+
+  // Set up Hash-based routing to support browser/mobile back buttons
+  window.addEventListener('hashchange', handleHashRouting);
+  
+  // Trigger initial routing
+  handleHashRouting();
 });
+
+// --- Hash-based Routing Handler ---
+function handleHashRouting() {
+  const hash = window.location.hash || '#/dashboard';
+  
+  if (hash === '#/directory') {
+    lastActiveSection = 'directory';
+    closeReportModal(false);
+    navigateTo('directory', false);
+  } else if (hash === '#/calculators') {
+    lastActiveSection = 'calculators';
+    closeReportModal(false);
+    navigateTo('calculators', false);
+  } else if (hash === '#/denuncia') {
+    openReportModal(false);
+  } else {
+    lastActiveSection = 'dashboard';
+    closeReportModal(false);
+    navigateTo('dashboard', false);
+  }
+}
 
 // --- Load Stations from LocalStorage or Seed ---
 function loadStations() {
@@ -282,7 +310,12 @@ function loadStations() {
 }
 
 // --- Navigation Management ---
-function navigateTo(sectionId) {
+function navigateTo(sectionId, updateHash = true) {
+  if (updateHash) {
+    window.location.hash = `#/${sectionId}`;
+    return;
+  }
+  
   // Hide all sections
   document.querySelectorAll('.app-section').forEach(section => {
     section.classList.remove('active');
@@ -317,7 +350,7 @@ function navigateTo(sectionId) {
     subtitleText.textContent = 'Monitoreo oficial y comunitario en Puerto Rico · Se actualiza 3 veces al día';
   } else if (sectionId === 'directory') {
     titleText.textContent = 'Precios en Bomba';
-    subtitleText.textContent = 'Visualiza los precios y actualiza la bomba en tiempo real · Se actualiza 3 veces al día';
+    subtitleText.textContent = 'Visualiza los precios and actualiza la bomba en tiempo real · Se actualiza 3 veces al día';
     
     // Automatically trigger proximity scan on navigation
     autoSortStationsByProximity();
@@ -500,11 +533,19 @@ function getAverages() {
 
 // --- Render Dashboard UI ---
 function renderDashboard() {
-  // Render DACO Ranges (Litro)
+  // Render DACO Ranges (Litro) in Dollars
   const currentPrices = dacoData?.prices || DEFAULT_DACO_DATA.prices;
-  document.getElementById('range-regular-display').textContent = `${currentPrices.regular.low.toFixed(1)}¢ - ${currentPrices.regular.high.toFixed(1)}¢`;
-  document.getElementById('range-premium-display').textContent = `${currentPrices.premium.low.toFixed(1)}¢ - ${currentPrices.premium.high.toFixed(1)}¢`;
-  document.getElementById('range-diesel-display').textContent = `${currentPrices.diesel.low.toFixed(1)}¢ - ${currentPrices.diesel.high.toFixed(1)}¢`;
+  
+  const regLow = (currentPrices.regular.low / 100).toFixed(3);
+  const regHigh = (currentPrices.regular.high / 100).toFixed(3);
+  const premLow = (currentPrices.premium.low / 100).toFixed(3);
+  const premHigh = (currentPrices.premium.high / 100).toFixed(3);
+  const dslLow = (currentPrices.diesel.low / 100).toFixed(3);
+  const dslHigh = (currentPrices.diesel.high / 100).toFixed(3);
+
+  document.getElementById('range-regular-display').textContent = `$${regLow} - $${regHigh}`;
+  document.getElementById('range-premium-display').textContent = `$${premLow} - $${premHigh}`;
+  document.getElementById('range-diesel-display').textContent = `$${dslLow} - $${dslHigh}`;
 
   const badgeStatus = document.getElementById('daco-badge-status');
   if (badgeStatus) {
@@ -1064,7 +1105,11 @@ function previewEvidencePhoto(e) {
   showToast('📷 Evidencia de bomba cargada correctamente.', 'success');
 }
 
-function openReportModal() {
+function openReportModal(updateHash = true) {
+  if (updateHash) {
+    window.location.hash = '#/denuncia';
+    return;
+  }
   document.querySelector('#report-modal .modal-title').textContent = 'Radicar Denuncia / Reporte';
   const modal = document.getElementById('report-modal');
   modal.classList.add('active');
@@ -1146,7 +1191,11 @@ function openReportModal() {
   }
 }
 
-function closeReportModal() {
+function closeReportModal(updateHash = true) {
+  if (updateHash) {
+    window.location.hash = `#/${lastActiveSection}`;
+    return;
+  }
   const modal = document.getElementById('report-modal');
   modal.classList.remove('active');
   document.body.style.overflow = '';
