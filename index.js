@@ -337,14 +337,16 @@ function getTrendMeta(current, previous) {
   }
 
   const delta = current - previous;
-  const deltaAbs = Math.abs(delta).toFixed(1);
+  const deltaAbsVal = Math.abs(delta) / 100;
+  const roundedVal = Math.round(deltaAbsVal * 1000) / 1000;
+  const formattedDelta = roundedVal % 0.01 === 0 ? `$${roundedVal.toFixed(2)}` : `$${roundedVal.toFixed(3)}`;
 
   if (delta > 0) {
     return {
       direction: 'up',
       icon: '↗',
-      label: `Subió ${deltaAbs}¢`,
-      title: `Subió ${deltaAbs}¢ vs. ayer`
+      label: `Subió ${formattedDelta}`,
+      title: `Subió ${formattedDelta} vs. ayer`
     };
   }
 
@@ -352,8 +354,8 @@ function getTrendMeta(current, previous) {
     return {
       direction: 'down',
       icon: '↘',
-      label: `Bajó ${deltaAbs}¢`,
-      title: `Bajó ${deltaAbs}¢ vs. ayer`
+      label: `Bajó ${formattedDelta}`,
+      title: `Bajó ${formattedDelta} vs. ayer`
     };
   }
 
