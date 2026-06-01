@@ -257,6 +257,7 @@ const priceHistory = [
 
 // --- App Initialization ---
 document.addEventListener('DOMContentLoaded', async () => {
+  initTheme(); // Set up light/dark mode preference immediately
   loadStations();
   await loadDacoData();
   renderDashboard();
@@ -1782,6 +1783,53 @@ function sanitizeReportPriceInput(input) {
   // Convert using the robust sanitization function
   let centsVal = sanitizePriceToCents(val);
   input.value = centsVal.toFixed(1);
+}
+
+// --- Theme Toggle Logic ---
+function initTheme() {
+  const savedTheme = localStorage.getItem('gasolinapr_theme') || 'dark'; // Default to dark mode
+  if (savedTheme === 'light') {
+    document.body.classList.add('light-theme');
+  } else {
+    document.body.classList.remove('light-theme');
+  }
+  updateThemeButton(savedTheme);
+}
+
+function toggleTheme() {
+  const isLight = document.body.classList.contains('light-theme');
+  const newTheme = isLight ? 'dark' : 'light';
+  
+  if (newTheme === 'light') {
+    document.body.classList.add('light-theme');
+  } else {
+    document.body.classList.remove('light-theme');
+  }
+  
+  localStorage.setItem('gasolinapr_theme', newTheme);
+  updateThemeButton(newTheme);
+}
+
+function updateThemeButton(theme) {
+  const btn = document.getElementById('theme-toggle-btn');
+  const icon = document.getElementById('theme-toggle-icon');
+  const text = document.getElementById('theme-toggle-text');
+  
+  if (!btn) return;
+  
+  if (theme === 'light') {
+    // Under light mode, the button should look black with white letters to switch to dark mode
+    btn.style.backgroundColor = '#0f172a'; // Black/Slate
+    btn.style.color = '#ffffff';
+    icon.textContent = '🌙';
+    text.textContent = 'Oscuro';
+  } else {
+    // Under dark mode, the button should look white with black letters to switch to light mode
+    btn.style.backgroundColor = '#ffffff'; // White
+    btn.style.color = '#0f172a'; // Black/Slate
+    icon.textContent = '☀️';
+    text.textContent = 'Claro';
+  }
 }
 
 

@@ -39,6 +39,33 @@
   --bottom-nav-height: 68px;
 }
 
+body.light-theme {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-card: rgba(255, 255, 255, 0.9);
+  --bg-card-hover: rgba(241, 245, 249, 0.95);
+  --border-color: rgba(15, 23, 42, 0.08);
+  --border-color-hover: rgba(15, 23, 42, 0.15);
+  
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  
+  --color-regular-glow: rgba(16, 185, 129, 0.08);
+  --color-premium-glow: rgba(245, 158, 11, 0.08);
+  --color-diesel-glow: rgba(14, 165, 233, 0.08);
+  --color-accent-glow: rgba(99, 102, 241, 0.08);
+}
+
+body.light-theme .nav-link.active,
+body.light-theme .mobile-nav-link.active {
+  background-color: rgba(15, 23, 42, 0.05) !important;
+}
+body.light-theme .nav-link:hover,
+body.light-theme .mobile-nav-link:hover {
+  background-color: rgba(15, 23, 42, 0.03) !important;
+}
+
 /* Reset & Scrollbar */
 * {
   margin: 0;
@@ -1461,7 +1488,8 @@ select.form-control {
 
   .header-controls {
     width: 100% !important;
-    justify-content: space-between !important;
+    justify-content: flex-start !important;
+    gap: 0.5rem !important;
   }
 
   .btn-primary {
