@@ -552,7 +552,7 @@ function renderStationsGrid() {
               <span>${station.municipality} ${station.address ? `• ${station.address}` : ''}</span>
             </div>
             <!-- ACTUALIZAR BUTTON RIGHT BELOW THE NAME/METADATA -->
-            <button class="btn-card-action" onclick="toggleInlineEditor('${station.id}')" style="margin-top: 0.5rem; padding: 0.35rem 0.75rem; font-size: 0.7rem; border: none; color: white; background: linear-gradient(135deg, #22c55e, #16a34a); box-shadow: 0 4px 10px rgba(34, 197, 94, 0.25); font-weight: 800; border-radius: 8px; display: inline-flex; align-items: center; gap: 0.25rem; transition: var(--transition-fast);">
+            <button class="btn-card-action" onclick="toggleInlineEditor('${station.id}')" style="margin-top: 0.5rem; padding: 0.35rem 0.75rem; font-size: 0.7rem; border: none; color: white; background: #111111; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25); font-weight: 800; border-radius: 8px; display: inline-flex; align-items: center; gap: 0.25rem; transition: var(--transition-fast);">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="width:10px; height:10px;"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
               Actualizar
             </button>
