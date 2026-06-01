@@ -785,6 +785,61 @@ select.form-control {
   color: var(--color-regular);
 }
 
+.price-value-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+
+.price-value {
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.price-value.cheap {
+  color: var(--color-regular);
+}
+
+.price-value.danger {
+  color: #f87171;
+}
+
+.price-trend-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  border-radius: 999px;
+  padding: 0.18rem 0.45rem;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.price-trend-chip .trend-arrow {
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.price-trend-chip.up {
+  color: var(--color-danger);
+  background-color: rgba(239, 68, 68, 0.12);
+}
+
+.price-trend-chip.down {
+  color: var(--color-success);
+  background-color: rgba(16, 185, 129, 0.12);
+}
+
+.price-trend-chip.stable {
+  color: var(--text-muted);
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
 .station-footer {
   margin-top: auto;
   padding-top: 1rem;
@@ -1722,7 +1777,15 @@ select.form-control {
   font-family: var(--font-title);
   color: var(--text-primary);
   font-weight: 700;
-  font-size: 0.75rem;
+}
+
+.wholesaler-price-item .price-value {
+  font-size: 0.95rem;
+}
+
+.wholesaler-price-item .price-trend-chip {
+  font-size: 0.58rem;
+  padding: 0.15rem 0.35rem;
 }
 
 /* ==========================================

@@ -19,6 +19,36 @@ const DACO_MAX_LIMITS = {
   diesel: 128.7
 };
 
+// --- Previous-Day Reference Prices for Trend Arrows ---
+const stationPreviousPrices = {
+  'st-1': { regular: 109.1, premium: 120.1, diesel: 120.4 },
+  'st-2': { regular: 107.9, premium: 117.1, diesel: 120.2 },
+  'st-3': { regular: 110.1, premium: 122.2, diesel: 121.0 },
+  'st-4': { regular: 108.3, premium: 115.5, diesel: 120.1 },
+  'st-5': { regular: 110.2, premium: 124.4, diesel: 123.0 },
+  'st-6': { regular: 109.9, premium: 122.4, diesel: 120.9 },
+  'st-7': { regular: 107.5, premium: 118.0, diesel: 119.4 },
+  'st-8': { regular: 110.3, premium: 124.2, diesel: 122.0 },
+  'st-9': { regular: 108.9, premium: 119.0, diesel: 120.5 },
+  'st-10': { regular: 108.9, premium: 121.0, diesel: 121.3 },
+  'st-11': { regular: 108.0, premium: 118.2, diesel: 120.1 },
+  'st-12': { regular: 110.2, premium: 123.9, diesel: 122.5 },
+  'st-13': { regular: 112.0, premium: 126.0, diesel: 124.2 },
+  'st-14': { regular: 107.5, premium: 121.2, diesel: 120.4 },
+  'st-15': { regular: 111.1, premium: 129.1, diesel: 127.0 }
+};
+
+const wholesalersPreviousPrices = {
+  American: { regular: 108.1, premium: 116.0, diesel: 120.2 },
+  '76': { regular: 108.0, premium: 121.3, diesel: 120.0 },
+  Gulf: { regular: 109.0, premium: 122.4, diesel: 120.4 },
+  Phillips: { regular: 107.4, premium: 121.0, diesel: 122.0 },
+  Sunoco: { regular: 110.2, premium: 128.4, diesel: 128.1 },
+  Puma: { regular: 109.4, premium: 123.3, diesel: 121.0 },
+  Total: { regular: 110.2, premium: 124.5, diesel: 122.3 },
+  Ecomaxx: { regular: 109.0, premium: 118.3, diesel: 120.5 }
+};
+
 // --- Seed Data: Official Wholesalers (DACO May 29, 2026) ---
 const wholesalersData = [
   { name: 'American', regular: 107.7, premium: 115.7, diesel: 120.7 },
@@ -266,10 +296,10 @@ function navigateTo(sectionId) {
   
   if (sectionId === 'dashboard') {
     titleText.textContent = 'Precios de Combustible';
-    subtitleText.textContent = 'Monitoreo oficial y comunitario en Puerto Rico';
+    subtitleText.textContent = 'Monitoreo oficial y comunitario en Puerto Rico · Se actualiza 3 veces al día';
   } else if (sectionId === 'directory') {
     titleText.textContent = 'Precios en Bomba';
-    subtitleText.textContent = 'Visualiza los precios y actualiza la bomba en tiempo real';
+    subtitleText.textContent = 'Visualiza los precios y actualiza la bomba en tiempo real · Se actualiza 3 veces al día';
     
     // Automatically trigger proximity scan on navigation
     autoSortStationsByProximity();
@@ -289,6 +319,73 @@ function formatPrice(priceInCentsL) {
 
 function getUnitLabel() {
   return '/L';
+}
+
+function getTrendMeta(current, previous) {
+  if (typeof current !== 'number' || typeof previous !== 'number') {
+    return {
+      direction: 'stable',
+      icon: '→',
+      label: 'Sin cambio',
+      title: 'Sin referencia previa'
+    };
+  }
+
+  const delta = current - previous;
+  const deltaAbs = Math.abs(delta).toFixed(1);
+
+  if (delta > 0) {
+    return {
+      direction: 'up',
+      icon: '↗',
+      label: `Subió ${deltaAbs}¢`,
+      title: `Subió ${deltaAbs}¢ vs. ayer`
+    };
+  }
+
+  if (delta < 0) {
+    return {
+      direction: 'down',
+      icon: '↘',
+      label: `Bajó ${deltaAbs}¢`,
+      title: `Bajó ${deltaAbs}¢ vs. ayer`
+    };
+  }
+
+  return {
+    direction: 'stable',
+    icon: '→',
+    label: 'Sin cambio',
+    title: 'Sin cambio vs. ayer'
+  };
+}
+
+function renderTrendChip(current, previous) {
+  const trend = getTrendMeta(current, previous);
+  return `<span class="price-trend-chip ${trend.direction}" title="${trend.title}"><span class="trend-arrow">${trend.icon}</span><span>${trend.label}</span></span>`;
+}
+
+function getStationPreviousPrice(stationId, fuelKey) {
+  return stationPreviousPrices[stationId]?.[fuelKey];
+}
+
+function getWholesalerPreviousPrice(brand, fuelKey) {
+  return wholesalersPreviousPrices[brand]?.[fuelKey];
+}
+
+function updateTrendIndicator(prefix, current, previous) {
+  const trend = getTrendMeta(current, previous);
+  const indicator = document.getElementById(`trend-${prefix}-indicator`);
+  const icon = document.getElementById(`trend-${prefix}-icon`);
+  const text = document.getElementById(`trend-${prefix}-text`);
+
+  if (indicator) {
+    indicator.classList.remove('trend-up', 'trend-down', 'trend-stable');
+    indicator.classList.add(`trend-${trend.direction}`);
+    indicator.title = trend.title;
+  }
+  if (icon) icon.textContent = trend.icon;
+  if (text) text.textContent = trend.label;
 }
 
 // --- Calculate Average Fuel Prices ---
@@ -315,6 +412,13 @@ function renderDashboard() {
   document.getElementById('range-regular-display').textContent = '107.7¢ - 111.7¢';
   document.getElementById('range-premium-display').textContent = '115.7¢ - 128.7¢';
   document.getElementById('range-diesel-display').textContent = '119.7¢ - 128.7¢';
+
+  const latestHistory = priceHistory[priceHistory.length - 1];
+  const previousHistory = priceHistory[priceHistory.length - 2];
+
+  updateTrendIndicator('regular', latestHistory.regular, previousHistory.regular);
+  updateTrendIndicator('premium', latestHistory.premium, previousHistory.premium);
+  updateTrendIndicator('diesel', latestHistory.diesel, previousHistory.diesel);
 }
 
 // --- Render Wholesalers List (Vertical Cards) ---
@@ -338,15 +442,24 @@ function renderWholesalers() {
       <div class="wholesaler-prices-group">
         <div class="wholesaler-price-item">
           <span>Reg</span>
-          <strong>${formatPrice(row.regular)}</strong>
+          <div class="price-value-stack">
+            <strong class="price-value">${formatPrice(row.regular)}</strong>
+            ${renderTrendChip(row.regular, getWholesalerPreviousPrice(row.name, 'regular'))}
+          </div>
         </div>
         <div class="wholesaler-price-item">
           <span>Prem</span>
-          <strong>${formatPrice(row.premium)}</strong>
+          <div class="price-value-stack">
+            <strong class="price-value">${formatPrice(row.premium)}</strong>
+            ${renderTrendChip(row.premium, getWholesalerPreviousPrice(row.name, 'premium'))}
+          </div>
         </div>
         <div class="wholesaler-price-item">
           <span>Dsl</span>
-          <strong>${formatPrice(row.diesel)}</strong>
+          <div class="price-value-stack">
+            <strong class="price-value">${formatPrice(row.diesel)}</strong>
+            ${renderTrendChip(row.diesel, getWholesalerPreviousPrice(row.name, 'diesel'))}
+          </div>
         </div>
       </div>
     `;
@@ -468,7 +581,12 @@ function renderStationsGrid() {
                 <div class="price-type-dot regular"></div> Regular
               </div>
             </td>
-            <td class="price-val ${isCheapest ? 'cheap' : ''} ${violatesRegular ? 'style="color:#f87171;"' : ''}">${formatPrice(station.prices.regular)}</td>
+            <td>
+              <div class="price-value-stack">
+                <strong class="price-value ${isCheapest ? 'cheap' : ''} ${violatesRegular ? 'danger' : ''}">${formatPrice(station.prices.regular)}</strong>
+                ${renderTrendChip(station.prices.regular, getStationPreviousPrice(station.id, 'regular'))}
+              </div>
+            </td>
           </tr>
           <tr>
             <td>
@@ -476,7 +594,12 @@ function renderStationsGrid() {
                 <div class="price-type-dot premium"></div> Premium
               </div>
             </td>
-            <td class="price-val ${violatesPremium ? 'style="color:#f87171;"' : ''}">${formatPrice(station.prices.premium)}</td>
+            <td>
+              <div class="price-value-stack">
+                <strong class="price-value ${violatesPremium ? 'danger' : ''}">${formatPrice(station.prices.premium)}</strong>
+                ${renderTrendChip(station.prices.premium, getStationPreviousPrice(station.id, 'premium'))}
+              </div>
+            </td>
           </tr>
           <tr>
             <td>
@@ -484,7 +607,12 @@ function renderStationsGrid() {
                 <div class="price-type-dot diesel"></div> Diésel
               </div>
             </td>
-            <td class="price-val ${violatesDiesel ? 'style="color:#f87171;"' : ''}">${formatPrice(station.prices.diesel)}</td>
+            <td>
+              <div class="price-value-stack">
+                <strong class="price-value ${violatesDiesel ? 'danger' : ''}">${formatPrice(station.prices.diesel)}</strong>
+                ${renderTrendChip(station.prices.diesel, getStationPreviousPrice(station.id, 'diesel'))}
+              </div>
+            </td>
           </tr>
         </tbody>
       </table>
