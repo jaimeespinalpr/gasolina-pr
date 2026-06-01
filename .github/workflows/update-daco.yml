@@ -1,0 +1,29 @@
+name: Scheduled DACO Price Synchronization
+
+on:
+  schedule:
+    # Run at 5:00 UTC (1:00 AM AST), 13:00 UTC (9:00 AM AST), and 21:00 UTC (5:00 PM AST) every day
+    - cron: '0 5,13,21 * * *'
+  workflow_dispatch: # Enable manual triggering of updates from GitHub UI
+
+jobs:
+  update-prices:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Run DACO synchronization script
+        run: node scripts/sync-daco.js
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.js
+          git diff --quiet && git diff --staged --quiet || (git commit -m "chore(daco): automatically synchronize fuel prices and limits [skip ci]" && git push)

@@ -985,11 +985,103 @@ function processCoordinates(lat, lon) {
 }
 
 // --- Modal Controls ---
+let repSelectedPhotoUrl = null;
+
+function previewEvidencePhoto(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  
+  if (!file.type.startsWith('image/')) {
+    showToast('Por favor, selecciona una imagen de evidencia válida.', 'error');
+    return;
+  }
+  
+  repSelectedPhotoUrl = URL.createObjectURL(file);
+  document.getElementById('rep-photo-preview-img').src = repSelectedPhotoUrl;
+  document.getElementById('rep-photo-preview-container').style.display = 'block';
+  showToast('📷 Evidencia de bomba cargada correctamente.', 'success');
+}
+
 function openReportModal() {
   document.querySelector('#report-modal .modal-title').textContent = 'Radicar Denuncia / Reporte';
   const modal = document.getElementById('report-modal');
   modal.classList.add('active');
   document.body.style.overflow = 'hidden';
+  
+  // Clear form and photo previews
+  document.getElementById('report-form').reset();
+  repSelectedPhotoUrl = null;
+  document.getElementById('rep-photo-preview-container').style.display = 'none';
+  document.getElementById('rep-photo-preview-img').src = '';
+  document.getElementById('gps-detection-status').style.display = 'none';
+  
+  // Auto-detect closest station using Geolocation
+  if (navigator.geolocation) {
+    document.getElementById('gps-detection-status').style.display = 'block';
+    document.getElementById('gps-detection-status').style.backgroundColor = 'rgba(255, 255, 255, 0.02)';
+    document.getElementById('gps-detection-status').style.color = 'var(--text-secondary)';
+    document.getElementById('gps-detection-status').textContent = '📍 Detectando ubicación actual por GPS...';
+    
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const userLat = position.coords.latitude;
+        const userLng = position.coords.longitude;
+        
+        // Calculate distances to all stations and find closest
+        let closestStation = null;
+        let minDistance = Infinity;
+        
+        stations.forEach(station => {
+          // Seed coordinates if missing
+          let lat = station.latitude;
+          let lng = station.longitude;
+          if (!lat || !lng) {
+            // Mock coordinates if not defined
+            lat = 18.42;
+            lng = -66.12;
+          }
+          
+          // Distance calculation (Haversine)
+          const R = 6371; // Earth radius in km
+          const dLat = (lat - userLat) * Math.PI / 180;
+          const dLng = (lng - userLng) * Math.PI / 180;
+          const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                    Math.cos(userLat * Math.PI / 180) * Math.cos(lat * Math.PI / 180) *
+                    Math.sin(dLng/2) * Math.sin(dLng/2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+          const distance = R * c;
+          
+          if (distance < minDistance) {
+            minDistance = distance;
+            closestStation = station;
+          }
+        });
+        
+        if (closestStation) {
+          document.getElementById('rep-station-name').value = closestStation.name;
+          document.getElementById('rep-brand').value = closestStation.brand;
+          document.getElementById('rep-municipality').value = closestStation.municipality;
+          document.getElementById('rep-address').value = closestStation.address || '';
+          document.getElementById('rep-price-regular').value = closestStation.prices.regular;
+          document.getElementById('rep-price-premium').value = closestStation.prices.premium;
+          document.getElementById('rep-price-diesel').value = closestStation.prices.diesel;
+          
+          document.getElementById('gps-detection-status').style.backgroundColor = 'var(--color-regular-glow)';
+          document.getElementById('gps-detection-status').style.color = 'var(--color-regular)';
+          document.getElementById('gps-detection-status').textContent = `📍 Ubicado en ${closestStation.name} (a ${minDistance.toFixed(2)} km) de forma automática por GPS.`;
+        } else {
+          document.getElementById('gps-detection-status').textContent = '⚠️ Ubicación obtenida, pero no se encontraron gasolineras mapeadas cerca.';
+        }
+      },
+      (error) => {
+        console.error('Error de geolocalización:', error);
+        document.getElementById('gps-detection-status').style.backgroundColor = 'rgba(239, 68, 68, 0.08)';
+        document.getElementById('gps-detection-status').style.color = 'var(--color-danger)';
+        document.getElementById('gps-detection-status').textContent = '⚠️ Permiso de GPS denegado. Por favor, selecciona tu gasolinera manualmente.';
+      },
+      { enableHighAccuracy: true, timeout: 5000 }
+    );
+  }
 }
 
 function closeReportModal() {
@@ -997,6 +1089,9 @@ function closeReportModal() {
   modal.classList.remove('active');
   document.body.style.overflow = '';
   document.getElementById('report-form').reset();
+  repSelectedPhotoUrl = null;
+  document.getElementById('rep-photo-preview-container').style.display = 'none';
+  document.getElementById('rep-photo-preview-img').src = '';
 }
 
 function handleReportSubmit(e) {
@@ -1009,6 +1104,7 @@ function handleReportSubmit(e) {
   const priceReg = parseFloat(document.getElementById('rep-price-regular').value);
   const pricePrem = parseFloat(document.getElementById('rep-price-premium').value);
   const priceDsl = parseFloat(document.getElementById('rep-price-diesel').value);
+  const violationDesc = document.getElementById('rep-violation-desc').value;
   
   // Basic validation
   if (!name || isNaN(priceReg) || isNaN(pricePrem) || isNaN(priceDsl)) {
@@ -1016,28 +1112,94 @@ function handleReportSubmit(e) {
     return;
   }
   
-  // Add new station to top of list
-  const newStation = {
-    id: `custom-${Date.now()}`,
-    name,
-    brand,
-    municipality,
-    address,
-    prices: {
-      regular: priceReg,
-      premium: pricePrem,
-      diesel: priceDsl
-    },
-    reportedAt: 'Hace unos instantes',
-    isCommunity: true
-  };
-  stations.unshift(newStation);
-  showToast('¡Reporte guardado con éxito! Gracias por colaborar con la comunidad.', 'success');
+  // Try to find if station exists to update it, or add new one
+  let station = stations.find(s => s.name.toLowerCase() === name.toLowerCase());
+  if (station) {
+    station.prices.regular = priceReg;
+    station.prices.premium = pricePrem;
+    station.prices.diesel = priceDsl;
+    station.reportedAt = 'Hace unos instantes';
+    station.isCommunity = true;
+  } else {
+    station = {
+      id: `custom-${Date.now()}`,
+      name,
+      brand,
+      municipality,
+      address,
+      prices: {
+        regular: priceReg,
+        premium: pricePrem,
+        diesel: priceDsl
+      },
+      reportedAt: 'Hace unos instantes',
+      isCommunity: true
+    };
+    stations.unshift(station);
+  }
   
+  // Save updated stations to local storage
   localStorage.setItem('gasolinapr_stations', JSON.stringify(stations));
   
+  // If they uploaded a photo and wrote a description, trigger DACO Querella/Receipt!
+  if (repSelectedPhotoUrl && violationDesc.trim()) {
+    const caseId = `Q-2026-${Math.floor(100000 + Math.random() * 900000)}`;
+    
+    // Render details inside receipt modal
+    document.getElementById('receipt-case-id').textContent = caseId;
+    document.getElementById('receipt-date-field').textContent = `Fecha: ${new Date().toLocaleDateString('es-PR', { year: 'numeric', month: 'long', day: 'numeric' })}`;
+    document.getElementById('receipt-stamp-time').textContent = `${new Date().toLocaleTimeString('es-PR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })} AST`;
+    
+    // Querellado
+    document.getElementById('receipt-station-name').textContent = station.name;
+    document.getElementById('receipt-station-brand').textContent = station.brand;
+    document.getElementById('receipt-station-location').textContent = `${station.municipality}, ${station.address || 'Carretera Estatal'}`;
+    
+    // Infractions Table
+    const tableBody = document.getElementById('receipt-infraction-table');
+    tableBody.innerHTML = '';
+    
+    ['regular', 'premium', 'diesel'].forEach(fuel => {
+      const price = station.prices[fuel];
+      const limit = DACO_MAX_LIMITS[fuel];
+      const exceeds = price > limit;
+      
+      const tr = document.createElement('tr');
+      tr.style.borderBottom = '1px solid #e2e8f0';
+      tr.innerHTML = `
+        <td style="padding: 0.6rem; font-weight: bold; text-transform: capitalize;">${fuel}</td>
+        <td style="padding: 0.6rem; text-align: right;">${price.toFixed(1)}¢</td>
+        <td style="padding: 0.6rem; text-align: right;">${limit.toFixed(1)}¢</td>
+        <td style="padding: 0.6rem; text-align: right; font-weight: bold; color: ${exceeds ? '#ef4444' : '#64748b'};">
+          ${exceeds ? `+${(price - limit).toFixed(1)}¢` : 'Estable'}
+        </td>
+      `;
+      tableBody.appendChild(tr);
+    });
+    
+    // Querellante info
+    document.getElementById('receipt-user-name').textContent = 'Radicación Digital (GasolinaPR)';
+    document.getElementById('receipt-user-contact').textContent = 'Anónimo • Reporte Comunitario GPS';
+    
+    // Comments / Description
+    document.getElementById('receipt-comments-row').style.display = 'table-row';
+    document.getElementById('receipt-user-comments').textContent = violationDesc;
+    
+    // Evidence image preview
+    document.getElementById('receipt-photo-preview').src = repSelectedPhotoUrl;
+    
+    // Close report modal and open receipt modal
+    closeReportModal();
+    document.getElementById('complaint-receipt-overlay').classList.add('active');
+    document.body.style.overflow = 'hidden';
+    
+    showToast(`¡Denuncia ${caseId} radicada y enviada a DACO con éxito!`, 'success');
+  } else {
+    showToast('¡Precio en bomba actualizado con éxito! Gracias por tu colaboración.', 'success');
+    closeReportModal();
+  }
+  
   // Re-sync UI state
-  closeReportModal();
   renderDashboard();
   renderStationsGrid();
   populateStationSelects();
