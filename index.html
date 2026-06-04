@@ -17,6 +17,7 @@
   
   <!-- Favicon / Styling -->
   <link rel="stylesheet" href="index.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 </head>
 <body>
 
@@ -230,6 +231,26 @@
             </svg>
             Volver al Dashboard
           </button>
+        </div>
+
+        <!-- INTERACTIVE GPS MAP & SYNC BAR -->
+        <div class="glass-panel" style="padding: 1rem; border-radius: 16px; margin-bottom: 1.25rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span style="font-size: 1.1rem;">🗺️</span>
+              <h3 style="font-family: var(--font-title); font-size: 0.95rem; font-weight: 800; margin: 0;">Mapa Localizador GPS (Google Maps / Waze)</h3>
+            </div>
+            <button type="button" class="btn-primary" id="btn-sync-waze" onclick="syncWithWazeAndGoogleMaps()" style="font-size: 0.75rem; padding: 0.4rem 0.8rem; border-radius: 20px; font-weight: 700; border: none; display: flex; align-items: center; gap: 0.35rem; cursor: pointer; transition: var(--transition-fast); background: var(--color-accent); color: white; box-shadow: 0 4px 10px rgba(99,102,241,0.25);">
+              <span>📡</span> Sincronizar Google Maps / Waze
+            </button>
+          </div>
+          
+          <div id="waze-sync-status" style="display: none; background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.2); padding: 0.5rem; border-radius: 8px; font-size: 0.75rem; font-weight: 700; color: var(--color-accent); text-align: center; margin-bottom: 0.75rem; position: relative; overflow: hidden;">
+            <div class="ocr-scan-bar"></div>
+            <span>📡 Conectando a redes de Waze y Google Maps para importar estaciones...</span>
+          </div>
+
+          <div id="gasolinapr-map" style="width: 100%; height: 260px; border-radius: 12px; border: 1px solid var(--border-color); z-index: 1;"></div>
         </div>
         
         <!-- SEARCH FILTERS BAR -->
@@ -497,6 +518,163 @@
       </section>
 
     </main>
+  </div>
+
+  <!-- MODAL: STATION PROFILE DETAIL & AMENITIES -->
+  <div class="modal-overlay" id="profile-modal">
+    <div class="modal" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="profile-modal-title">Perfil de Gasolinera</h3>
+        <button class="modal-close" onclick="closeProfileModal()">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      
+      <!-- VIEW MODE -->
+      <div id="profile-view-container" style="display: block;">
+        <div class="modal-body">
+          <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+            <div class="station-brand-icon" id="profile-brand-icon" style="width: 42px; height: 42px; font-size: 1.1rem;">P</div>
+            <div>
+              <h4 style="font-family: var(--font-title); font-size: 1.15rem; font-weight: 800; margin: 0;" id="profile-station-name">Puma Ave. Esmeralda</h4>
+              <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.1rem;" id="profile-station-address">Ave. Esmeralda #42, Guaynabo</p>
+            </div>
+          </div>
+
+          <!-- Price Display Section -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; background: var(--bg-secondary); padding: 0.75rem; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 1.25rem;">
+            <div style="text-align: center;">
+              <span style="font-size: 0.6rem; color: var(--color-regular); font-weight: bold; text-transform: uppercase;">Regular</span>
+              <strong style="display: block; font-size: 1rem; color: var(--text-primary); margin-top: 0.15rem;" id="profile-price-regular">$1.087</strong>
+            </div>
+            <div style="text-align: center; border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color);">
+              <span style="font-size: 0.6rem; color: var(--color-premium); font-weight: bold; text-transform: uppercase;">Premium</span>
+              <strong style="display: block; font-size: 1rem; color: var(--text-primary); margin-top: 0.15rem;" id="profile-price-premium">$1.197</strong>
+            </div>
+            <div style="text-align: center;">
+              <span style="font-size: 0.6rem; color: var(--color-diesel); font-weight: bold; text-transform: uppercase;">Diésel</span>
+              <strong style="display: block; font-size: 1rem; color: var(--text-primary); margin-top: 0.15rem;" id="profile-price-diesel">$1.207</strong>
+            </div>
+          </div>
+
+          <h5 style="font-size: 0.8rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.75rem; border-bottom: 1px dashed var(--border-color); padding-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.5px;">Servicios y Amenidades</h5>
+          
+          <!-- Amenities Icons Grid -->
+          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 1.25rem;">
+            <div class="amenity-item" id="amenity-restroom">
+              <span class="amenity-icon">🚻</span>
+              <span class="amenity-label">Baños Públicos</span>
+            </div>
+            <div class="amenity-item" id="amenity-air">
+              <span class="amenity-icon">💨</span>
+              <span class="amenity-label">Aire para Gomas</span>
+            </div>
+            <div class="amenity-item" id="amenity-store">
+              <span class="amenity-icon">🏪</span>
+              <span class="amenity-label">Tienda</span>
+            </div>
+            <div class="amenity-item" id="amenity-atm">
+              <span class="amenity-icon">🏧</span>
+              <span class="amenity-label">Cajero ATH / ATM</span>
+            </div>
+            <div class="amenity-item" id="amenity-carwash">
+              <span class="amenity-icon">🧼</span>
+              <span class="amenity-label">Lavado / Car Wash</span>
+            </div>
+          </div>
+
+          <!-- Schedule & Payment Methods -->
+          <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1rem;">
+            <div class="glass-panel" style="padding: 0.75rem; border-radius: 10px; display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem;">
+              <span>⏰</span>
+              <div>
+                <strong style="color: var(--text-secondary); display: block; font-size: 0.65rem; text-transform: uppercase;">Horario de Servicio</strong>
+                <span id="profile-hours-text" style="color: var(--text-primary); font-weight: bold;">Cargando...</span>
+              </div>
+            </div>
+
+            <div class="glass-panel" style="padding: 0.75rem; border-radius: 10px; display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem;">
+              <span>💳</span>
+              <div>
+                <strong style="color: var(--text-secondary); display: block; font-size: 0.65rem; text-transform: uppercase;">Métodos de Pago Aceptados</strong>
+                <span id="profile-payments-text" style="color: var(--text-primary); font-weight: bold;">Cargando...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="closeProfileModal()">Cerrar</button>
+          <button type="button" class="btn-primary" onclick="switchProfileToEditMode()">✏️ Editar Detalles</button>
+        </div>
+      </div>
+
+      <!-- EDIT MODE -->
+      <form id="profile-edit-form" onsubmit="handleProfileEditSubmit(event)" style="display: none;">
+        <input type="hidden" id="profile-edit-station-id">
+        <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
+          <h4 style="font-family: var(--font-title); font-size: 1rem; font-weight: 800; margin-bottom: 1rem; color: var(--color-accent);">Modificar Amenidades y Servicios</h4>
+          
+          <div class="calc-group" style="margin-bottom: 1.25rem;">
+            <label style="font-weight: 700; font-size: 0.8rem; text-transform: uppercase; color: var(--text-secondary);">Marcar Servicios Disponibles:</label>
+            <div style="display: flex; flex-direction: column; gap: 0.65rem; margin-top: 0.5rem;">
+              <label class="form-checkbox-label" style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; cursor: pointer;">
+                <input type="checkbox" id="edit-amenity-restroom" style="width:16px; height:16px; accent-color: var(--color-accent);">
+                <span>🚻 Baños Públicos Disponibles</span>
+              </label>
+              <label class="form-checkbox-label" style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; cursor: pointer;">
+                <input type="checkbox" id="edit-amenity-air" style="width:16px; height:16px; accent-color: var(--color-accent);">
+                <span>💨 Aire para Gomas Funcionando</span>
+              </label>
+              <label class="form-checkbox-label" style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; cursor: pointer;">
+                <input type="checkbox" id="edit-amenity-store" style="width:16px; height:16px; accent-color: var(--color-accent);">
+                <span>🏪 Tienda de Conveniencia / Minimarket</span>
+              </label>
+              <label class="form-checkbox-label" style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; cursor: pointer;">
+                <input type="checkbox" id="edit-amenity-atm" style="width:16px; height:16px; accent-color: var(--color-accent);">
+                <span>🏧 Cajero Automático ATH / ATM</span>
+              </label>
+              <label class="form-checkbox-label" style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; cursor: pointer;">
+                <input type="checkbox" id="edit-amenity-carwash" style="width:16px; height:16px; accent-color: var(--color-accent);">
+                <span>🧼 Área para Lavado / Car Wash</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="calc-group" style="margin-bottom: 1.25rem;">
+            <label for="edit-profile-hours">Horario de Servicio *</label>
+            <input type="text" class="form-control" id="edit-profile-hours" placeholder="Ej: 24/7 o 6:00 AM - 10:00 PM" required style="padding-left: 1rem;">
+          </div>
+
+          <div class="calc-group">
+            <label style="font-weight: 700; font-size: 0.8rem; text-transform: uppercase; color: var(--text-secondary);">Métodos de Pago Aceptados:</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.5rem;">
+              <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.75rem; cursor: pointer;">
+                <input type="checkbox" class="edit-payment-checkbox" value="Cash" style="width:14px; height:14px;">
+                <span>Efectivo (Cash)</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.75rem; cursor: pointer;">
+                <input type="checkbox" class="edit-payment-checkbox" value="ATH Móvil" style="width:14px; height:14px;">
+                <span>ATH Móvil 📱</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.75rem; cursor: pointer;">
+                <input type="checkbox" class="edit-payment-checkbox" value="Visa" style="width:14px; height:14px;">
+                <span>Visa 💳</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.75rem; cursor: pointer;">
+                <input type="checkbox" class="edit-payment-checkbox" value="Mastercard" style="width:14px; height:14px;">
+                <span>Mastercard 💳</span>
+              </label>
+            </div>
+          </div>
+        </div>
+        
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="switchProfileToViewMode()">Cancelar</button>
+          <button type="submit" class="btn-primary">Guardar Detalles</button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <!-- MODAL: REPORT A GAS PRICE -->
@@ -804,6 +982,7 @@
   <div class="toast-container" id="toast-container"></div>
 
   <!-- Load JS Logic -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="index.js"></script>
 </body>
 </html>

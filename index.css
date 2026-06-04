@@ -1924,5 +1924,88 @@ select.form-control {
   box-shadow: 0 12px 30px rgba(0,0,0,0.6);
 }
 
+/* ==========================================
+   Phase 9: Leaflet Map & Amenities Styles
+   ========================================== */
+.leaflet-popup-content-wrapper {
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 12px !important;
+  font-family: var(--font-sans) !important;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3) !important;
+}
+
+.leaflet-popup-tip {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+.leaflet-popup-content {
+  margin: 0.75rem 1rem !important;
+  line-height: 1.4 !important;
+  font-size: 0.75rem !important;
+}
+
+.leaflet-popup-content strong {
+  font-family: var(--font-title) !important;
+  color: var(--text-primary) !important;
+}
+
+.amenity-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: all var(--transition-fast);
+  opacity: 0.4;
+  color: var(--text-muted);
+}
+
+.amenity-item.active {
+  opacity: 1;
+  background: var(--color-accent-glow);
+  border-color: rgba(99, 102, 241, 0.3);
+  color: var(--color-accent);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.05);
+}
+
+/* Specific highlight colors for active amenities to match design aesthetics */
+.amenity-item.active#amenity-restroom {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: var(--color-regular);
+}
+
+.amenity-item.active#amenity-air {
+  background: rgba(14, 165, 233, 0.08);
+  border-color: rgba(14, 165, 233, 0.3);
+  color: var(--color-diesel);
+}
+
+.amenity-item.active#amenity-store {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: #f59e0b;
+}
+
+.amenity-item.active#amenity-atm {
+  background: rgba(139, 92, 246, 0.08);
+  border-color: rgba(139, 92, 246, 0.3);
+  color: var(--color-premium);
+}
+
+.amenity-item.active#amenity-carwash {
+  background: rgba(236, 72, 153, 0.08);
+  border-color: rgba(236, 72, 153, 0.3);
+  color: #ec4899;
+}
+
+
 
 

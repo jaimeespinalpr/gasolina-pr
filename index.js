@@ -334,14 +334,35 @@ function toggleFavoriteStation(stationId) {
   renderStationsGrid();
 }
 
+function ensureStationAmenities(station) {
+  if (!station.amenities) {
+    station.amenities = {
+      hasRestroom: Math.random() > 0.35,
+      hasAir: Math.random() > 0.4,
+      hasStore: Math.random() > 0.3,
+      hasAtm: Math.random() > 0.45,
+      hasCarWash: Math.random() > 0.7,
+      hours: Math.random() > 0.5 ? '24/7' : '6:00 AM - 10:00 PM',
+      paymentMethods: ['Cash', 'Visa', 'Mastercard', 'ATH Móvil'].filter(() => Math.random() > 0.15)
+    };
+    if (station.amenities.paymentMethods.length === 0) {
+      station.amenities.paymentMethods = ['Cash'];
+    }
+  }
+}
+
 function loadStations() {
   const stored = localStorage.getItem('gasolinapr_stations');
   if (stored) {
     stations = JSON.parse(stored);
   } else {
     stations = [...defaultStations];
-    localStorage.setItem('gasolinapr_stations', JSON.stringify(stations));
   }
+  
+  // Seed amenities for all stations dynamically
+  stations.forEach(s => ensureStationAmenities(s));
+  localStorage.setItem('gasolinapr_stations', JSON.stringify(stations));
+  
   loadFavorites();
 }
 
@@ -390,6 +411,11 @@ function navigateTo(sectionId, updateHash = true) {
     
     // Automatically trigger proximity scan on navigation
     autoSortStationsByProximity();
+    
+    // Load or update GPS Leaflet map
+    setTimeout(() => {
+      initGPSMap();
+    }, 100);
   } else if (sectionId === 'calculators') {
     titleText.textContent = 'Herramientas de Ahorro';
     subtitleText.textContent = 'Calcula costos de llenado y convierte medidas al instante';
@@ -731,14 +757,17 @@ function renderStationsGrid() {
               </svg>
               <span>${station.municipality} ${station.address ? `• ${station.address}` : ''}</span>
             </div>
-            <!-- ACTUALIZAR BUTTON RIGHT BELOW THE NAME/METADATA -->
-            <div style="display: flex; gap: 0.25rem;">
-              <button class="btn-card-action" onclick="toggleInlineEditor('${station.id}')" style="margin-top: 0.5rem; padding: 0.35rem 0.75rem; font-size: 0.7rem; border: none; color: white; background: #111111; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25); font-weight: 800; border-radius: 8px; display: inline-flex; align-items: center; gap: 0.25rem; transition: var(--transition-fast);">
+            <!-- ACTUALIZAR, FAVORITA Y PERFIL BUTTONS -->
+            <div style="display: flex; gap: 0.25rem; flex-wrap: wrap;">
+              <button class="btn-card-action" onclick="toggleInlineEditor('${station.id}')" style="margin-top: 0.5rem; padding: 0.35rem 0.6rem; font-size: 0.65rem; border: none; color: white; background: #111111; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25); font-weight: 800; border-radius: 8px; display: inline-flex; align-items: center; gap: 0.2rem; transition: var(--transition-fast);">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="width:10px; height:10px;"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                 Actualizar
               </button>
-              <button class="btn-card-action" onclick="toggleFavoriteStation('${station.id}')" style="margin-top: 0.5rem; padding: 0.35rem 0.75rem; font-size: 0.7rem; border: none; color: ${isFavorite(station.id) ? '#ffffff' : 'var(--color-premium)'}; background: ${isFavorite(station.id) ? 'var(--color-premium)' : 'rgba(245, 158, 11, 0.08)'}; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25); font-weight: 800; border-radius: 8px; display: inline-flex; align-items: center; gap: 0.25rem; transition: var(--transition-fast);">
+              <button class="btn-card-action" onclick="toggleFavoriteStation('${station.id}')" style="margin-top: 0.5rem; padding: 0.35rem 0.6rem; font-size: 0.65rem; border: none; color: ${isFavorite(station.id) ? '#ffffff' : 'var(--color-premium)'}; background: ${isFavorite(station.id) ? 'var(--color-premium)' : 'rgba(245, 158, 11, 0.08)'}; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25); font-weight: 800; border-radius: 8px; display: inline-flex; align-items: center; gap: 0.2rem; transition: var(--transition-fast);">
                 <span>${isFavorite(station.id) ? '★' : '☆'}</span> Favorita
+              </button>
+              <button class="btn-card-action" onclick="openProfileModal('${station.id}')" style="margin-top: 0.5rem; padding: 0.35rem 0.6rem; font-size: 0.65rem; border: none; color: white; background: var(--color-accent); box-shadow: 0 4px 10px rgba(99, 102, 241, 0.25); font-weight: 800; border-radius: 8px; display: inline-flex; align-items: center; gap: 0.2rem; transition: var(--transition-fast);">
+                <span>📋</span> Perfil
               </button>
             </div>
           </div>
@@ -849,6 +878,9 @@ function renderStationsGrid() {
     
     container.appendChild(card);
   });
+
+  // Synchronize map markers with current stations list view
+  updateMapMarkers();
 }
 
 // --- Toggle Collapsible Price Editor ---
@@ -2243,5 +2275,299 @@ function shareSocialCard() {
     showToast('No se pudo copiar automáticamente. Inténtalo de nuevo.', 'error');
   });
 }
+
+// ==========================================
+// Phase 9: Google Maps/Waze Map & Profile Modals
+// ==========================================
+
+let prMap = null;
+let mapMarkers = [];
+
+// Seed pool of new stations in Puerto Rico that can be imported/discovered
+const wazeSyncPool = [
+  {
+    id: 'wz-1',
+    name: 'Shell Arecibo Centro',
+    brand: 'Shell',
+    municipality: 'Arecibo',
+    address: 'Ave. Víctor Rojas #12',
+    prices: { regular: 106.7, premium: 118.7, diesel: 119.7 },
+    reportedAt: 'Sincronizado vía Maps/Waze',
+    isCommunity: false,
+    coords: { lat: 18.4724, lon: -66.7157 }
+  },
+  {
+    id: 'wz-2',
+    name: 'Gulf Fajardo Marina',
+    brand: 'Gulf',
+    municipality: 'Fajardo',
+    address: 'Carr. 195 Km 2.8',
+    prices: { regular: 107.7, premium: 116.7, diesel: 118.7 },
+    reportedAt: 'Sincronizado vía Maps/Waze',
+    isCommunity: false,
+    coords: { lat: 18.3361, lon: -65.6319 }
+  },
+  {
+    id: 'wz-3',
+    name: 'Total Humacao Boulevard',
+    brand: 'Total',
+    municipality: 'Humacao',
+    address: 'Ave. Nicanor Vázquez',
+    prices: { regular: 109.7, premium: 121.7, diesel: 120.7 },
+    reportedAt: 'Sincronizado vía Maps/Waze',
+    isCommunity: false,
+    coords: { lat: 18.1501, lon: -65.8272 }
+  },
+  {
+    id: 'wz-4',
+    name: 'Ecomaxx Dorado Beach',
+    brand: 'Ecomaxx',
+    municipality: 'Dorado',
+    address: 'Carr. 693 Km 6.5',
+    prices: { regular: 105.7, premium: 115.7, diesel: 117.7 },
+    reportedAt: 'Sincronizado vía Maps/Waze',
+    isCommunity: false,
+    coords: { lat: 18.4589, lon: -66.2622 }
+  },
+  {
+    id: 'wz-5',
+    name: 'Puma Carolina Mall',
+    brand: 'Puma',
+    municipality: 'Carolina',
+    address: 'Ave. Fragoso Esq. Monserrate',
+    prices: { regular: 108.7, premium: 119.7, diesel: 119.7 },
+    reportedAt: 'Sincronizado vía Maps/Waze',
+    isCommunity: false,
+    coords: { lat: 18.3845, lon: -65.9734 }
+  }
+];
+
+// Initialize Leaflet GPS map
+function initGPSMap() {
+  const mapElement = document.getElementById('gasolinapr-map');
+  if (!mapElement) return;
+
+  if (prMap) {
+    prMap.invalidateSize();
+    return;
+  }
+
+  // Set centered coords on Puerto Rico central region
+  prMap = L.map('gasolinapr-map').setView([18.2208, -66.5901], 9);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '© OpenStreetMap contributors'
+  }).addTo(prMap);
+
+  updateMapMarkers();
+}
+
+// Update markers based on current active list of stations
+function updateMapMarkers() {
+  if (!prMap) return;
+
+  // Clear existing markers
+  mapMarkers.forEach(m => prMap.removeLayer(m));
+  mapMarkers = [];
+
+  const filtered = getFilteredStations();
+
+  filtered.forEach(station => {
+    if (station.coords && station.coords.lat && station.coords.lon) {
+      const marker = L.marker([station.coords.lat, station.coords.lon]).addTo(prMap);
+      
+      const popupContent = `
+        <div style="font-family: var(--font-sans); min-width: 140px; color: var(--text-primary);">
+          <strong style="display:block; font-size: 0.8rem; margin-bottom: 0.25rem;">${station.name}</strong>
+          <span style="font-size:0.65rem; color: var(--text-muted);">${station.brand} • ${station.municipality}</span>
+          <div style="display:flex; justify-content:space-between; margin-top: 0.5rem; border-top: 1px dashed var(--border-color); padding-top: 0.4rem; font-size:0.65rem;">
+            <span>Regular:</span>
+            <strong style="color:var(--color-regular);">${formatPrice(station.prices.regular)}/L</strong>
+          </div>
+          <button onclick="openProfileModal('${station.id}')" style="width: 100%; margin-top: 0.5rem; padding: 0.3rem 0.5rem; font-size: 0.65rem; border: none; color: white; background: var(--color-accent); font-weight: bold; border-radius: 6px; cursor: pointer; transition: background 0.2s;">📋 Ver Perfil</button>
+        </div>
+      `;
+      
+      marker.bindPopup(popupContent);
+      mapMarkers.push(marker);
+    }
+  });
+}
+
+// Simulate sync call with Google Maps / Waze API networks
+function syncWithWazeAndGoogleMaps() {
+  const syncStatus = document.getElementById('waze-sync-status');
+  const syncBtn = document.getElementById('btn-sync-waze');
+  
+  if (syncStatus) syncStatus.style.display = 'block';
+  if (syncBtn) {
+    syncBtn.disabled = true;
+    syncBtn.style.opacity = '0.5';
+  }
+
+  showToast('📡 Consultando red de Google Maps & Waze API...', 'info');
+
+  setTimeout(() => {
+    if (syncStatus) syncStatus.style.display = 'none';
+    if (syncBtn) {
+      syncBtn.disabled = false;
+      syncBtn.style.opacity = '1';
+    }
+
+    // Filter out stations that have already been imported
+    const newStationsToImport = wazeSyncPool.filter(wazeSt => {
+      return !stations.some(s => s.name.toLowerCase() === wazeSt.name.toLowerCase());
+    });
+
+    if (newStationsToImport.length > 0) {
+      // Ensure amenities exist
+      newStationsToImport.forEach(s => ensureStationAmenities(s));
+      
+      // Import them
+      stations = [...newStationsToImport, ...stations];
+      localStorage.setItem('gasolinapr_stations', JSON.stringify(stations));
+
+      showToast(`📡 ¡Sincronización de Maps/Waze completada! Se importaron ${newStationsToImport.length} nuevas gasolineras en Puerto Rico.`, 'success');
+      
+      // Refresh UI state
+      renderDashboard();
+      renderStationsGrid();
+      populateStationSelects();
+      renderRankings();
+    } else {
+      showToast('📡 Google Maps & Waze ya se encuentran al día. No se detectaron nuevas estaciones.', 'info');
+    }
+  }, 2500); // 2.5 seconds scanner animation
+}
+
+// Profile Modal Controller Actions
+let activeProfileStationId = null;
+
+function openProfileModal(stationId) {
+  const station = stations.find(s => s.id === stationId);
+  if (!station) return;
+
+  activeProfileStationId = stationId;
+  ensureStationAmenities(station);
+
+  // Load texts into Modal View
+  document.getElementById('profile-station-name').textContent = station.name;
+  document.getElementById('profile-station-address').textContent = `${station.municipality} ${station.address ? `• ${station.address}` : ''}`;
+  document.getElementById('profile-price-regular').textContent = formatPrice(station.prices.regular);
+  document.getElementById('profile-price-premium').textContent = formatPrice(station.prices.premium);
+  document.getElementById('profile-price-diesel').textContent = formatPrice(station.prices.diesel);
+
+  const brandIcon = document.getElementById('profile-brand-icon');
+  if (brandIcon) {
+    brandIcon.className = `station-brand-icon ${station.brand.toLowerCase().replace(/\s/g, '')}`;
+    brandIcon.textContent = station.brand.charAt(0).toUpperCase();
+  }
+
+  // Update active status on amenities UI grid badges
+  const amenities = station.amenities;
+  toggleAmenityClass('amenity-restroom', amenities.hasRestroom);
+  toggleAmenityClass('amenity-air', amenities.hasAir);
+  toggleAmenityClass('amenity-store', amenities.hasStore);
+  toggleAmenityClass('amenity-atm', amenities.hasAtm);
+  toggleAmenityClass('amenity-carwash', amenities.hasCarWash);
+
+  // Set Schedule and payment methods display
+  document.getElementById('profile-hours-text').textContent = amenities.hours || 'Sin especificar';
+  document.getElementById('profile-payments-text').textContent = (amenities.paymentMethods && amenities.paymentMethods.length > 0)
+    ? amenities.paymentMethods.join(', ')
+    : 'Solo Efectivo';
+
+  // Toggle view layout to Read Mode
+  switchProfileToViewMode();
+
+  // Open Modal Overlay
+  const modal = document.getElementById('profile-modal');
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function toggleAmenityClass(elementId, isActive) {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  if (isActive) {
+    el.classList.add('active');
+  } else {
+    el.classList.remove('active');
+  }
+}
+
+function switchProfileToEditMode() {
+  const station = stations.find(s => s.id === activeProfileStationId);
+  if (!station) return;
+
+  // Pre-fill edit form inputs
+  document.getElementById('profile-edit-station-id').value = station.id;
+  document.getElementById('edit-amenity-restroom').checked = station.amenities.hasRestroom;
+  document.getElementById('edit-amenity-air').checked = station.amenities.hasAir;
+  document.getElementById('edit-amenity-store').checked = station.amenities.hasStore;
+  document.getElementById('edit-amenity-atm').checked = station.amenities.hasAtm;
+  document.getElementById('edit-amenity-carwash').checked = station.amenities.hasCarWash;
+  document.getElementById('edit-profile-hours').value = station.amenities.hours || '24/7';
+
+  // Payment checkboxes
+  const paymentCheckboxes = document.querySelectorAll('.edit-payment-checkbox');
+  paymentCheckboxes.forEach(cb => {
+    cb.checked = station.amenities.paymentMethods.includes(cb.value);
+  });
+
+  // Toggle visible block
+  document.getElementById('profile-view-container').style.display = 'none';
+  document.getElementById('profile-edit-form').style.display = 'block';
+}
+
+function switchProfileToViewMode() {
+  document.getElementById('profile-view-container').style.display = 'block';
+  document.getElementById('profile-edit-form').style.display = 'none';
+}
+
+function closeProfileModal() {
+  const modal = document.getElementById('profile-modal');
+  modal.classList.remove('active');
+  document.body.style.overflow = '';
+  activeProfileStationId = null;
+}
+
+function handleProfileEditSubmit(e) {
+  e.preventDefault();
+
+  const stationId = document.getElementById('profile-edit-station-id').value;
+  const station = stations.find(s => s.id === stationId);
+  if (!station) return;
+
+  // Gather payment methods list
+  const payments = [];
+  document.querySelectorAll('.edit-payment-checkbox').forEach(cb => {
+    if (cb.checked) {
+      payments.push(cb.value);
+    }
+  });
+
+  // Save new values
+  station.amenities = {
+    hasRestroom: document.getElementById('edit-amenity-restroom').checked,
+    hasAir: document.getElementById('edit-amenity-air').checked,
+    hasStore: document.getElementById('edit-amenity-store').checked,
+    hasAtm: document.getElementById('edit-amenity-atm').checked,
+    hasCarWash: document.getElementById('edit-amenity-carwash').checked,
+    hours: document.getElementById('edit-profile-hours').value,
+    paymentMethods: payments
+  };
+
+  // Persist update in local storage database
+  localStorage.setItem('gasolinapr_stations', JSON.stringify(stations));
+
+  showToast(`✅ Perfil de ${station.name} actualizado con éxito.`, 'success');
+
+  // Reload read-only view in the modal and re-render grid
+  openProfileModal(stationId);
+  renderStationsGrid();
+}
+
 
 
