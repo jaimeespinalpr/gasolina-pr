@@ -108,11 +108,8 @@
         </div>
       </header>
 
-          <!-- TOP ROW: DACO + FAVORITES SIDE BY SIDE -->
-          <div class="dashboard-top-row">
-            
             <!-- PANEL 1: RANGO OFICIAL DACO -->
-            <div class="glass-panel collapsible-panel" id="panel-daco-ranges">
+            <div class="glass-panel collapsible-panel" id="panel-daco-ranges" style="width: 100%;">
               <div class="panel-header" onclick="togglePanel('panel-daco-ranges')" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; margin-bottom: 0 !important; padding: 0.75rem 1rem !important;">
                 <div class="panel-title" style="font-size: 0.85rem !important;">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 16px; height: 16px;">
@@ -170,7 +167,7 @@
             </div>
 
             <!-- PANEL 0: ESTACIONES FAVORITAS -->
-            <div class="glass-panel collapsible-panel" id="panel-favorites">
+            <div class="glass-panel collapsible-panel" id="panel-favorites" style="width: 100%;">
               <div class="panel-header" onclick="togglePanel('panel-favorites')" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; padding: 0.75rem 1rem !important; margin-bottom: 0 !important;">
                 <div class="panel-title" style="font-size: 0.85rem !important;">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: var(--color-premium);">
@@ -189,7 +186,6 @@
               </div>
             </div>
 
-          </div>
 
           <!-- PANEL 2: TENDENCIAS DE PRECIOS -->
           <div class="glass-panel collapsible-panel collapsed" id="panel-price-trends" style="width: 100%;">

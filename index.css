@@ -2050,21 +2050,6 @@ select.form-control {
   transform: scale(0.95);
 }
 
-.dashboard-top-row {
-  display: grid;
-  grid-template-columns: 1.35fr 0.65fr;
-  gap: 1.5rem;
-  width: 100%;
-  margin-bottom: 0.75rem;
-}
-
-@media (max-width: 1024px) {
-  .dashboard-top-row {
-    grid-template-columns: 1fr;
-    gap: 1.25rem;
-  }
-}
-
 /* Rediseño/Reducción de Rango Oficial DACO */
 #panel-daco-ranges .panel-content {
   padding-top: 0.5rem;
