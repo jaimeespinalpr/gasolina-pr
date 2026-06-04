@@ -258,6 +258,7 @@ const priceHistory = [
 // --- App Initialization ---
 document.addEventListener('DOMContentLoaded', async () => {
   initTheme(); // Set up light/dark mode preference immediately
+  initOfflineMode(); // Set up offline mode listeners and initial check
   loadStations();
   await loadDacoData();
   renderDashboard();
@@ -290,6 +291,10 @@ function handleHashRouting() {
     lastActiveSection = 'calculators';
     closeReportModal(false);
     navigateTo('calculators', false);
+  } else if (hash === '#/rankings') {
+    lastActiveSection = 'rankings';
+    closeReportModal(false);
+    navigateTo('rankings', false);
   } else if (hash === '#/denuncia') {
     openReportModal(false);
   } else {
@@ -300,6 +305,35 @@ function handleHashRouting() {
 }
 
 // --- Load Stations from LocalStorage or Seed ---
+let favorites = [];
+
+function loadFavorites() {
+  const stored = localStorage.getItem('gasolinapr_favorites');
+  if (stored) {
+    favorites = JSON.parse(stored);
+  } else {
+    favorites = [];
+    localStorage.setItem('gasolinapr_favorites', JSON.stringify(favorites));
+  }
+}
+
+function isFavorite(stationId) {
+  return favorites.includes(stationId);
+}
+
+function toggleFavoriteStation(stationId) {
+  const index = favorites.indexOf(stationId);
+  if (index > -1) {
+    favorites.splice(index, 1);
+    showToast('Estación eliminada de favoritas.', 'success');
+  } else {
+    favorites.push(stationId);
+    showToast('⭐ Estación agregada a favoritas (Guardado localmente).', 'success');
+  }
+  localStorage.setItem('gasolinapr_favorites', JSON.stringify(favorites));
+  renderStationsGrid();
+}
+
 function loadStations() {
   const stored = localStorage.getItem('gasolinapr_stations');
   if (stored) {
@@ -308,6 +342,7 @@ function loadStations() {
     stations = [...defaultStations];
     localStorage.setItem('gasolinapr_stations', JSON.stringify(stations));
   }
+  loadFavorites();
 }
 
 // --- Navigation Management ---
@@ -358,6 +393,10 @@ function navigateTo(sectionId, updateHash = true) {
   } else if (sectionId === 'calculators') {
     titleText.textContent = 'Herramientas de Ahorro';
     subtitleText.textContent = 'Calcula costos de llenado y convierte medidas al instante';
+  } else if (sectionId === 'rankings') {
+    titleText.textContent = 'Estadísticas y Rankings';
+    subtitleText.textContent = 'Comparativa de precios de combustible por municipio en Puerto Rico';
+    renderRankings();
   }
 
   // Smooth scroll to top
@@ -693,10 +732,15 @@ function renderStationsGrid() {
               <span>${station.municipality} ${station.address ? `• ${station.address}` : ''}</span>
             </div>
             <!-- ACTUALIZAR BUTTON RIGHT BELOW THE NAME/METADATA -->
-            <button class="btn-card-action" onclick="toggleInlineEditor('${station.id}')" style="margin-top: 0.5rem; padding: 0.35rem 0.75rem; font-size: 0.7rem; border: none; color: white; background: #111111; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25); font-weight: 800; border-radius: 8px; display: inline-flex; align-items: center; gap: 0.25rem; transition: var(--transition-fast);">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="width:10px; height:10px;"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-              Actualizar
-            </button>
+            <div style="display: flex; gap: 0.25rem;">
+              <button class="btn-card-action" onclick="toggleInlineEditor('${station.id}')" style="margin-top: 0.5rem; padding: 0.35rem 0.75rem; font-size: 0.7rem; border: none; color: white; background: #111111; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25); font-weight: 800; border-radius: 8px; display: inline-flex; align-items: center; gap: 0.25rem; transition: var(--transition-fast);">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="width:10px; height:10px;"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                Actualizar
+              </button>
+              <button class="btn-card-action" onclick="toggleFavoriteStation('${station.id}')" style="margin-top: 0.5rem; padding: 0.35rem 0.75rem; font-size: 0.7rem; border: none; color: ${isFavorite(station.id) ? '#ffffff' : 'var(--color-premium)'}; background: ${isFavorite(station.id) ? 'var(--color-premium)' : 'rgba(245, 158, 11, 0.08)'}; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25); font-weight: 800; border-radius: 8px; display: inline-flex; align-items: center; gap: 0.25rem; transition: var(--transition-fast);">
+                <span>${isFavorite(station.id) ? '★' : '☆'}</span> Favorita
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -850,6 +894,45 @@ function saveInlinePrices(stationId) {
   
   const index = stations.findIndex(s => s.id === stationId);
   if (index !== -1) {
+    if (!navigator.onLine) {
+      stations[index].prices = { regular: priceReg, premium: pricePrem, diesel: priceDsl };
+      stations[index].reportedAt = 'Guardado offline (Local)';
+      stations[index].isCommunity = true;
+      
+      localStorage.setItem('gasolinapr_stations', JSON.stringify(stations));
+      
+      const queuedReport = {
+        id: stationId,
+        name: stations[index].name,
+        brand: stations[index].brand,
+        municipality: stations[index].municipality,
+        address: stations[index].address,
+        prices: {
+          regular: priceReg,
+          premium: pricePrem,
+          diesel: priceDsl
+        },
+        reportedAt: 'Sincronización pendiente (Offline)',
+        violationDesc: 'Actualización rápida de precios de bomba',
+        photoUrl: null
+      };
+      
+      let offlineQueue = [];
+      const storedQueue = localStorage.getItem('gasolinapr_offline_reports');
+      if (storedQueue) {
+        offlineQueue = JSON.parse(storedQueue);
+      }
+      offlineQueue.push(queuedReport);
+      localStorage.setItem('gasolinapr_offline_reports', JSON.stringify(offlineQueue));
+      
+      renderDashboard();
+      renderStationsGrid();
+      populateStationSelects();
+      
+      showToast(`⚠️ Sin conexión. Bomba de ${stations[index].name} actualizada localmente. Se sincronizará al volver la conexión.`, 'warning');
+      return;
+    }
+
     stations[index].prices = { regular: priceReg, premium: pricePrem, diesel: priceDsl };
     stations[index].reportedAt = 'Actualizado hace unos instantes';
     stations[index].isCommunity = true;
@@ -1228,7 +1311,73 @@ function handleReportSubmit(e) {
   const priceReg = sanitizePriceToCents(rawPriceReg);
   const pricePrem = sanitizePriceToCents(rawPricePrem);
   const priceDsl = sanitizePriceToCents(rawPriceDsl);
-  
+
+  if (!navigator.onLine) {
+    let stationId = `custom-${Date.now()}`;
+    let existingStation = stations.find(s => s.name.toLowerCase() === name.toLowerCase());
+    if (existingStation) {
+      stationId = existingStation.id;
+    }
+    
+    const queuedReport = {
+      id: stationId,
+      name,
+      brand,
+      municipality,
+      address,
+      prices: {
+        regular: priceReg,
+        premium: pricePrem,
+        diesel: priceDsl
+      },
+      reportedAt: 'Sincronización pendiente (Offline)',
+      violationDesc,
+      photoUrl: repSelectedPhotoUrl
+    };
+    
+    let offlineQueue = [];
+    const storedQueue = localStorage.getItem('gasolinapr_offline_reports');
+    if (storedQueue) {
+      offlineQueue = JSON.parse(storedQueue);
+    }
+    offlineQueue.push(queuedReport);
+    localStorage.setItem('gasolinapr_offline_reports', JSON.stringify(offlineQueue));
+    
+    showToast('⚠️ Sin conexión. Reporte guardado localmente (Offline). Se sincronizará al volver la conexión.', 'warning');
+    closeReportModal();
+    
+    // Update local memory so it reflects instantly offline
+    if (existingStation) {
+      existingStation.prices.regular = priceReg;
+      existingStation.prices.premium = pricePrem;
+      existingStation.prices.diesel = priceDsl;
+      existingStation.reportedAt = 'Guardado offline (Local)';
+      existingStation.isCommunity = true;
+    } else {
+      existingStation = {
+        id: stationId,
+        name,
+        brand,
+        municipality,
+        address,
+        prices: {
+          regular: priceReg,
+          premium: pricePrem,
+          diesel: priceDsl
+        },
+        reportedAt: 'Guardado offline (Local)',
+        isCommunity: true
+      };
+      stations.unshift(existingStation);
+    }
+    localStorage.setItem('gasolinapr_stations', JSON.stringify(stations));
+    
+    renderDashboard();
+    renderStationsGrid();
+    populateStationSelects();
+    return;
+  }
+
   // Try to find if station exists to update it, or add new one
   let station = stations.find(s => s.name.toLowerCase() === name.toLowerCase());
   if (station) {
@@ -1833,6 +1982,266 @@ function updateThemeButton(theme) {
     icon.textContent = '☀️';
     text.textContent = 'Claro';
   }
+}
+
+// ==========================================
+// Phase 8: Offline, OCR, and Rankings Logic
+// ==========================================
+
+// --- Offline Mode Helpers ---
+function initOfflineMode() {
+  window.addEventListener('online', handleOnlineStatusChange);
+  window.addEventListener('offline', handleOnlineStatusChange);
+  // Initial check
+  handleOnlineStatusChange();
+}
+
+function handleOnlineStatusChange() {
+  const banner = document.getElementById('offline-status-banner');
+  if (!banner) return;
+  if (!navigator.onLine) {
+    banner.style.display = 'block';
+    showToast('⚠️ Modo offline detectado. Los cambios se guardarán localmente.', 'warning');
+  } else {
+    banner.style.display = 'none';
+    syncOfflineData();
+  }
+}
+
+function syncOfflineData() {
+  const queued = localStorage.getItem('gasolinapr_offline_reports');
+  if (!queued) return;
+  
+  try {
+    const offlineReports = JSON.parse(queued);
+    if (offlineReports.length === 0) return;
+    
+    // Process each queued report
+    offlineReports.forEach(report => {
+      let station = stations.find(s => s.name.toLowerCase() === report.name.toLowerCase());
+      if (station) {
+        station.prices.regular = report.prices.regular;
+        station.prices.premium = report.prices.premium;
+        station.prices.diesel = report.prices.diesel;
+        station.reportedAt = 'Sincronizado desde cola local';
+        station.isCommunity = true;
+      } else {
+        station = {
+          id: report.id,
+          name: report.name,
+          brand: report.brand,
+          municipality: report.municipality,
+          address: report.address,
+          prices: report.prices,
+          reportedAt: 'Sincronizado desde cola local',
+          isCommunity: true
+        };
+        stations.unshift(station);
+      }
+    });
+    
+    // Save updated stations
+    localStorage.setItem('gasolinapr_stations', JSON.stringify(stations));
+    
+    // Clear queue
+    localStorage.removeItem('gasolinapr_offline_reports');
+    
+    showToast(`✅ ¡Conexión recuperada! Se han sincronizado ${offlineReports.length} reportes/denuncias locales.`, 'success');
+    
+    // Refresh UI
+    renderDashboard();
+    renderStationsGrid();
+    populateStationSelects();
+    renderRankings();
+  } catch (err) {
+    console.error('Error syncing offline data:', err);
+  }
+}
+
+// --- OCR Scanner Simulator ---
+function triggerOcrScan() {
+  if (!repSelectedPhotoUrl) {
+    showToast('📸 Toma o selecciona una foto primero.', 'error');
+    document.getElementById('rep-evidence-photo').click();
+    return;
+  }
+  simulateOcrScan();
+}
+
+function simulateOcrScan() {
+  const statusContainer = document.getElementById('ocr-scanning-status');
+  statusContainer.style.display = 'block';
+  
+  const ocrBtn = document.getElementById('btn-rep-ocr');
+  if (ocrBtn) {
+    ocrBtn.disabled = true;
+    ocrBtn.style.opacity = '0.5';
+  }
+  
+  setTimeout(() => {
+    statusContainer.style.display = 'none';
+    if (ocrBtn) {
+      ocrBtn.disabled = false;
+      ocrBtn.style.opacity = '1';
+    }
+    
+    // Generate realistic random prices (cents) ending in 0.7
+    const reg = (104 + Math.floor(Math.random() * 8)) + 0.7;
+    const prem = (118 + Math.floor(Math.random() * 7)) + 0.7;
+    const dsl = (116 + Math.floor(Math.random() * 7)) + 0.7;
+    
+    // Format to dollars for confirmation prompt
+    const regDls = (reg / 100).toFixed(3);
+    const premDls = (prem / 100).toFixed(3);
+    const dslDls = (dsl / 100).toFixed(3);
+    
+    const confirmMessage = `🤖 Escaneo OCR finalizado.\n\nPrecios detectados:\n• Regular: $${regDls}/L\n• Premium: $${premDls}/L\n• Diésel: $${dslDls}/L\n\n¿Deseas aplicar estos precios al formulario?`;
+    
+    if (confirm(confirmMessage)) {
+      document.getElementById('rep-price-regular').value = reg.toFixed(1);
+      document.getElementById('rep-price-premium').value = prem.toFixed(1);
+      document.getElementById('rep-price-diesel').value = dsl.toFixed(1);
+      showToast('✅ Precios OCR sugeridos cargados en el formulario.', 'success');
+    }
+  }, 1500);
+}
+
+// --- Municipality Rankings ---
+function getMunicipalityStats() {
+  const muniMap = {};
+  
+  stations.forEach(station => {
+    const muni = station.municipality;
+    if (!muniMap[muni]) {
+      muniMap[muni] = {
+        name: muni,
+        totalRegular: 0,
+        count: 0,
+        cheapestStation: null,
+        cheapestPrice: Infinity
+      };
+    }
+    
+    muniMap[muni].totalRegular += station.prices.regular;
+    muniMap[muni].count += 1;
+    
+    if (station.prices.regular < muniMap[muni].cheapestPrice) {
+      muniMap[muni].cheapestPrice = station.prices.regular;
+      muniMap[muni].cheapestStation = station.name;
+    }
+  });
+  
+  const statsList = Object.values(muniMap).map(muni => {
+    return {
+      name: muni.name,
+      averageRegular: muni.totalRegular / muni.count,
+      cheapestStation: muni.cheapestStation,
+      cheapestPrice: muni.cheapestPrice
+    };
+  });
+  
+  // Sort statsList by averageRegular ascending (cheapest average first)
+  statsList.sort((a, b) => a.averageRegular - b.averageRegular);
+  
+  return statsList;
+}
+
+function renderRankings() {
+  const stats = getMunicipalityStats();
+  if (stats.length === 0) return;
+  
+  // Cheapest and Most Expensive Municipalities
+  const cheapestMuni = stats[0];
+  const expensiveMuni = stats[stats.length - 1];
+  
+  document.getElementById('rank-cheapest-muni').textContent = `${cheapestMuni.name} (${formatPrice(cheapestMuni.averageRegular)}/L)`;
+  document.getElementById('rank-expensive-muni').textContent = `${expensiveMuni.name} (${formatPrice(expensiveMuni.averageRegular)}/L)`;
+  
+  // Table Body
+  const tableBody = document.getElementById('municipality-rankings-table');
+  if (tableBody) {
+    tableBody.innerHTML = '';
+    stats.forEach(muni => {
+      const tr = document.createElement('tr');
+      tr.style.borderBottom = '1px solid var(--border-color)';
+      tr.innerHTML = `
+        <td style="padding: 0.6rem 0.25rem; font-weight: 700; color: var(--text-primary);">${muni.name}</td>
+        <td style="padding: 0.6rem 0.25rem; text-align: right; font-weight: bold; color: var(--color-regular);">${formatPrice(muni.averageRegular)}/L</td>
+        <td style="padding: 0.6rem 0.25rem; text-align: right; color: var(--text-secondary);">${muni.cheapestStation}</td>
+        <td style="padding: 0.6rem 0.25rem; text-align: right; font-weight: 700; color: var(--color-regular);">${formatPrice(muni.cheapestPrice)}/L</td>
+      `;
+      tableBody.appendChild(tr);
+    });
+  }
+  
+  // Update Social Share Card
+  updateSocialCard();
+}
+
+function updateSocialCard() {
+  if (stations.length === 0) return;
+  
+  let totalReg = 0, totalPrem = 0, totalDsl = 0;
+  let cheapestStation = stations[0];
+  
+  stations.forEach(s => {
+    totalReg += s.prices.regular;
+    totalPrem += s.prices.premium;
+    totalDsl += s.prices.diesel;
+    
+    if (s.prices.regular < cheapestStation.prices.regular) {
+      cheapestStation = s;
+    }
+  });
+  
+  const avgReg = totalReg / stations.length;
+  const avgPrem = totalPrem / stations.length;
+  const avgDsl = totalDsl / stations.length;
+  
+  const dateField = document.getElementById('share-card-date');
+  if (dateField) {
+    dateField.textContent = new Date().toLocaleDateString('es-PR', { month: 'long', year: 'numeric' });
+  }
+  
+  const regField = document.getElementById('share-avg-regular');
+  if (regField) regField.textContent = `${formatPrice(avgReg)}/L`;
+  
+  const premField = document.getElementById('share-avg-premium');
+  if (premField) premField.textContent = `${formatPrice(avgPrem)}/L`;
+  
+  const dslField = document.getElementById('share-avg-diesel');
+  if (dslField) dslField.textContent = `${formatPrice(avgDsl)}/L`;
+  
+  const cheapestStField = document.getElementById('share-cheapest-station');
+  if (cheapestStField) cheapestStField.textContent = cheapestStation.name;
+  
+  const cheapestPrField = document.getElementById('share-cheapest-price');
+  if (cheapestPrField) cheapestPrField.textContent = `${formatPrice(cheapestStation.prices.regular)}/L`;
+}
+
+function shareSocialCard() {
+  const dateStr = document.getElementById('share-card-date')?.textContent || 'Junio 2026';
+  const avgReg = document.getElementById('share-avg-regular')?.textContent || '$1.097/L';
+  const avgPrem = document.getElementById('share-avg-premium')?.textContent || '$1.212/L';
+  const avgDsl = document.getElementById('share-avg-diesel')?.textContent || '$1.222/L';
+  const cheapestSt = document.getElementById('share-cheapest-station')?.textContent || '';
+  const cheapestPr = document.getElementById('share-cheapest-price')?.textContent || '';
+  
+  const shareText = `🇵🇷 ¡Precios de Gasolina en Puerto Rico (${dateStr})! 🚗💨\n\n` +
+                    `📊 Averajes en la Isla:\n` +
+                    `• Regular: ${avgReg}\n` +
+                    `• Premium: ${avgPrem}\n` +
+                    `• Diésel: ${avgDsl}\n\n` +
+                    `⭐ Estación más barata regulada:\n` +
+                    `• ${cheapestSt} a solo ${cheapestPr}\n\n` +
+                    `¡Monitorea y reporta abusos en tiempo real con GasolinaPR! 📱🇵🇷`;
+                    
+  navigator.clipboard.writeText(shareText).then(() => {
+    showToast('📋 ¡Datos de la Tarjeta Social copiados al portapapeles!', 'success');
+  }).catch(err => {
+    console.error('Error copying text:', err);
+    showToast('No se pudo copiar automáticamente. Inténtalo de nuevo.', 'error');
+  });
 }
 
 

@@ -1888,4 +1888,41 @@ select.form-control {
   transform: rotate(-90deg);
 }
 
+/* ==========================================
+   Phase 8: Offline Mode & OCR Styles
+   ========================================== */
+#offline-status-banner {
+  animation: pulse-offline-banner 2s infinite ease-in-out;
+}
+
+@keyframes pulse-offline-banner {
+  0%, 100% { opacity: 0.98; }
+  50% { opacity: 0.8; }
+}
+
+.ocr-scan-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, var(--color-accent), transparent);
+  animation: ocr-scan-anim 1.5s infinite linear;
+}
+
+@keyframes ocr-scan-anim {
+  0% { top: 0; }
+  50% { top: 100%; }
+  100% { top: 0; }
+}
+
+#social-share-card {
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+#social-share-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.6);
+}
+
+
 

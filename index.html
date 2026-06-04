@@ -22,6 +22,11 @@
 
   <div class="app-container">
     
+    <!-- OFFLINE STATUS BANNER -->
+    <div id="offline-status-banner" style="display: none; background: linear-gradient(135deg, var(--color-danger), #b91c1c); color: white; text-align: center; padding: 0.5rem 1rem; font-size: 0.75rem; font-weight: 700; z-index: 1000; position: sticky; top: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+      ⚠️ Modo Offline Activo: Mostrando datos guardados localmente. Los reportes se sincronizarán al recuperar conexión.
+    </div>
+    
     <!-- DESKTOP SIDEBAR -->
     <aside class="sidebar">
       <a href="#" class="brand" onclick="navigateTo('dashboard')">
@@ -46,6 +51,12 @@
           <a class="nav-link" onclick="navigateTo('calculators')" id="nav-calculators">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 11h.01M9 11h.01M12 14h.01M15 11h.01M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg>
             Calculadoras y Ahorro
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" onclick="navigateTo('rankings')" id="nav-rankings">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z"/></svg>
+            Rankings Municipio
           </a>
         </li>
       </nav>
@@ -401,6 +412,90 @@
         </div>
       </section>
 
+      <!-- SECTION 4: RANKINGS POR MUNICIPIO -->
+      <section id="rankings-section" class="app-section">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+          <h2 style="font-family: var(--font-title); font-size: 1.5rem; font-weight: 800; margin: 0;">Rankings y Estadísticas</h2>
+        </div>
+        
+        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1.5rem;">Comparativa de precios de combustible Regular por municipio y tarjeta social compartible.</p>
+
+        <!-- Summary Cards Grid -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+          <div class="glass-panel" style="padding: 1.25rem; border-radius: 16px; text-align: center;">
+            <span style="font-size: 0.65rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Municipio Más Barato (Regular)</span>
+            <div style="font-family: var(--font-title); font-size: 1.4rem; font-weight: 800; color: var(--color-success); margin-top: 0.35rem;" id="rank-cheapest-muni">Cargando...</div>
+          </div>
+          <div class="glass-panel" style="padding: 1.25rem; border-radius: 16px; text-align: center;">
+            <span style="font-size: 0.65rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Municipio Más Caro (Regular)</span>
+            <div style="font-family: var(--font-title); font-size: 1.4rem; font-weight: 800; color: var(--color-danger); margin-top: 0.35rem;" id="rank-expensive-muni">Cargando...</div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 1.5rem; align-items: start; margin-bottom: 2rem;">
+          <!-- Table -->
+          <div class="glass-panel" style="padding: 1.25rem; border-radius: 16px; overflow-x: auto;">
+            <h3 style="font-family: var(--font-title); font-size: 1rem; font-weight: 800; margin-bottom: 0.75rem;">Averajes y Estación Barata</h3>
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: left;">
+              <thead>
+                <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase;">
+                  <th style="padding: 0.5rem 0.25rem;">Municipio</th>
+                  <th style="padding: 0.5rem 0.25rem; text-align: right;">Promedio</th>
+                  <th style="padding: 0.5rem 0.25rem; text-align: right;">Estación Barata</th>
+                  <th style="padding: 0.5rem 0.25rem; text-align: right;">Precio</th>
+                </tr>
+              </thead>
+              <tbody id="municipality-rankings-table">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Social Share Card -->
+          <div class="glass-panel" style="padding: 1.25rem; border-radius: 16px; display: flex; flex-direction: column; gap: 1rem;">
+            <h3 style="font-family: var(--font-title); font-size: 1rem; font-weight: 800;">Tarjeta Social Compartible</h3>
+            
+            <div id="social-share-card" style="background: linear-gradient(135deg, #1e1b4b, #0f082e); border: 2px solid var(--color-accent); border-radius: 18px; padding: 1.25rem; color: white; box-shadow: 0 10px 25px rgba(0,0,0,0.5); position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 0.75rem;">
+              <div style="position: absolute; top: -50px; right: -50px; width: 120px; height: 120px; background: rgba(99, 102, 241, 0.12); border-radius: 50%; filter: blur(30px);"></div>
+              
+              <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.5rem;">
+                <div style="font-weight: 800; font-size: 0.85rem; letter-spacing: 0.5px; color: var(--color-accent);">GASOLINA PR 🇵🇷</div>
+                <div style="font-size: 0.6rem; color: #94a3b8;" id="share-card-date">Junio 2026</div>
+              </div>
+              
+              <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.75rem;">
+                  <span>Regular Promedio:</span>
+                  <strong id="share-avg-regular" style="color: var(--color-regular); font-size: 0.85rem;">$1.097/L</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.75rem;">
+                  <span>Premium Promedio:</span>
+                  <strong id="share-avg-premium" style="color: var(--color-premium); font-size: 0.85rem;">$1.212/L</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.75rem;">
+                  <span>Diésel Promedio:</span>
+                  <strong id="share-avg-diesel" style="color: var(--color-diesel); font-size: 0.85rem;">$1.222/L</strong>
+                </div>
+              </div>
+              
+              <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 10px; padding: 0.5rem 0.75rem; text-align: center;">
+                <span style="font-size: 0.6rem; color: #94a3b8; display: block; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Estación Más Barata</span>
+                <strong id="share-cheapest-station" style="font-family: var(--font-title); font-size: 0.85rem; display: block; margin-top: 0.15rem; color: white;">Total San Patricio</strong>
+                <span id="share-cheapest-price" style="font-size: 0.95rem; font-weight: 800; color: var(--color-regular); display: block; margin-top: 0.1rem;">$1.077/L</span>
+              </div>
+              
+              <div style="font-size: 0.55rem; color: #64748b; text-align: center; border-top: 1px solid rgba(255,255,255,0.04); padding-top: 0.4rem;">
+                Monitoreo comunitario en tiempo real · GasolinaPR
+              </div>
+            </div>
+            
+            <button type="button" class="btn-primary" onclick="shareSocialCard()" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.35rem; font-size: 0.8rem; font-weight: 700; border: none; height: 38px; border-radius: 20px;">
+              📋 Copiar Enlace y Compartir
+            </button>
+          </div>
+        </div>
+      </section>
+
     </main>
   </div>
 
@@ -490,13 +585,25 @@
           <div style="margin-top: 1rem; border-top: 1px dashed var(--border-color); padding-top: 1rem;">
             <label style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 700;">Evidencia del Abuso de Precio</label>
             <input type="file" id="rep-evidence-photo" accept="image/*" capture="environment" style="display: none;" onchange="previewEvidencePhoto(event)">
-            <button type="button" class="btn-secondary" id="btn-rep-camera" onclick="document.getElementById('rep-evidence-photo').click()" style="width: 100%; margin-top: 0.5rem; border-color: var(--color-danger); color: var(--color-danger); background: rgba(239, 68, 68, 0.05); display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-weight: 700; transition: var(--transition-fast);">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              Tomar Foto del Letrero / Bomba *
-            </button>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.5rem;">
+              <button type="button" class="btn-secondary" id="btn-rep-camera" onclick="document.getElementById('rep-evidence-photo').click()" style="width: 100%; border-color: var(--color-danger); color: var(--color-danger); background: rgba(239, 68, 68, 0.05); display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-weight: 700; transition: var(--transition-fast); margin-top: 0;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Tomar Foto *
+              </button>
+              <button type="button" class="btn-secondary" id="btn-rep-ocr" onclick="triggerOcrScan()" style="width: 100%; border-color: var(--color-accent); color: var(--color-accent); background: rgba(99, 102, 241, 0.05); display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-weight: 700; transition: var(--transition-fast);">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                Escanear OCR
+              </button>
+            </div>
+            <div id="ocr-scanning-status" style="display: none; text-align: center; margin-top: 0.75rem; background: rgba(99, 102, 241, 0.08); padding: 0.75rem; border-radius: 12px; border: 1px solid rgba(99, 102, 241, 0.2); color: var(--color-accent); font-weight: bold; font-size: 0.8rem; position: relative; overflow: hidden;">
+              <div class="ocr-scan-bar"></div>
+              <span>🔍 Analizando imagen con OCR...</span>
+            </div>
             <div id="rep-photo-preview-container" style="display: none; text-align: center; margin-top: 0.75rem; background-color: rgba(255, 255, 255, 0.02); padding: 0.75rem; border-radius: 12px; border: 1px solid var(--border-color);">
               <img id="rep-photo-preview-img" src="" style="max-height: 150px; border-radius: 8px; margin-bottom: 0.5rem; max-width: 100%; border: 1px solid var(--border-color);">
               <p style="font-size: 0.7rem; color: var(--color-success); font-weight: 700; margin: 0;">✅ Foto de evidencia cargada</p>
