@@ -77,8 +77,15 @@
       
       <!-- TOP UTILITIES HEADER -->
       <header class="top-header">
-        <div class="header-title" onclick="navigateTo('dashboard')" style="cursor: pointer;">
-          <h1 id="page-title-text">Precios de Combustible</h1>
+        <div class="header-title">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <h1 id="page-title-text" onclick="navigateTo('dashboard')" style="cursor: pointer; display: inline-block;">Precios de Combustible</h1>
+            <!-- THEME TOGGLE BUTTON -->
+            <button id="theme-toggle-btn" onclick="toggleTheme()">
+              <span id="theme-toggle-icon">🌙</span>
+              <span id="theme-toggle-text">Dark</span>
+            </button>
+          </div>
           <p id="page-subtitle-text">Monitoreo oficial y comunitario en Puerto Rico</p>
         </div>
         
@@ -98,75 +105,90 @@
             </svg>
             Denuncia
           </button>
-
-          <!-- THEME TOGGLE BUTTON -->
-          <button id="theme-toggle-btn" onclick="toggleTheme()" style="height: 32px; padding: 0.35rem 0.65rem; border-radius: 20px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 700; border: none; cursor: pointer; transition: var(--transition-fast);">
-            <span id="theme-toggle-icon">🌙</span>
-            <span id="theme-toggle-text">Dark</span>
-          </button>
         </div>
       </header>
 
-      <!-- SECTION 1: DASHBOARD -->
-      <section id="dashboard-section" class="app-section active">
-        <div class="dashboard-grid">
-          
-          <!-- PANEL 1: RANGO OFICIAL DACO -->
-          <div class="glass-panel collapsible-panel" id="panel-daco-ranges" style="width: 100%;">
-            <div class="panel-header" onclick="togglePanel('panel-daco-ranges')" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; margin-bottom: 0 !important; padding: 0.75rem 1rem !important;">
-              <div class="panel-title" style="font-size: 0.85rem !important;">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 16px; height: 16px;">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <!-- TOP ROW: DACO + FAVORITES SIDE BY SIDE -->
+          <div class="dashboard-top-row">
+            
+            <!-- PANEL 1: RANGO OFICIAL DACO -->
+            <div class="glass-panel collapsible-panel" id="panel-daco-ranges">
+              <div class="panel-header" onclick="togglePanel('panel-daco-ranges')" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; margin-bottom: 0 !important; padding: 0.75rem 1rem !important;">
+                <div class="panel-title" style="font-size: 0.85rem !important;">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 16px; height: 16px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Rango Oficial DACO
+                </div>
+                <svg class="chevron-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 16px; height: 16px;">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
                 </svg>
-                Rango Oficial DACO
               </div>
-              <svg class="chevron-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 16px; height: 16px;">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-            <div class="panel-content">
-              <!-- FUEL CARDS CONTAINER -->
-              <div class="fuel-cards-container" style="margin-top: 0.5rem;">
-                <!-- REGULAR CARD -->
-                <div class="fuel-card regular" style="padding: 1.25rem !important;">
-                  <div class="card-header" style="margin-bottom: 1rem !important;">
-                    <span class="fuel-badge">Regular</span>
-                    <div class="trend-indicator trend-stable" id="trend-regular-indicator">
-                      <span id="trend-regular-icon">→</span> <span id="trend-regular-text">Estable</span>
+              <div class="panel-content">
+                <!-- FUEL CARDS CONTAINER -->
+                <div class="fuel-cards-container" style="margin-top: 0.5rem;">
+                  <!-- REGULAR CARD -->
+                  <div class="fuel-card regular">
+                    <div class="card-header">
+                      <span class="fuel-badge">Regular</span>
+                      <div class="trend-indicator trend-stable" id="trend-regular-indicator">
+                        <span id="trend-regular-icon">→</span> <span id="trend-regular-text">Estable</span>
+                      </div>
+                    </div>
+                    <div class="price-display" style="text-align: center; margin-bottom: 0;">
+                      <div class="daco-range-main" id="range-regular-display">107.7¢ - 111.7¢</div>
                     </div>
                   </div>
-                  <div class="price-display" style="text-align: center; margin-bottom: 0;">
-                    <div class="daco-range-main" id="range-regular-display">107.7¢ - 111.7¢</div>
-                  </div>
-                </div>
-                
-                <!-- PREMIUM CARD -->
-                <div class="fuel-card premium" style="padding: 1.25rem !important;">
-                  <div class="card-header" style="margin-bottom: 1rem !important;">
-                    <span class="fuel-badge">Premium</span>
-                    <div class="trend-indicator trend-up" id="trend-premium-indicator">
-                      <span id="trend-premium-icon">↗</span> <span id="trend-premium-text">Subiendo</span>
+                  
+                  <!-- PREMIUM CARD -->
+                  <div class="fuel-card premium">
+                    <div class="card-header">
+                      <span class="fuel-badge">Premium</span>
+                      <div class="trend-indicator trend-up" id="trend-premium-indicator">
+                        <span id="trend-premium-icon">↗</span> <span id="trend-premium-text">Subiendo</span>
+                      </div>
+                    </div>
+                    <div class="price-display" style="text-align: center; margin-bottom: 0;">
+                      <div class="daco-range-main" id="range-premium-display">115.7¢ - 128.7¢</div>
                     </div>
                   </div>
-                  <div class="price-display" style="text-align: center; margin-bottom: 0;">
-                    <div class="daco-range-main" id="range-premium-display">115.7¢ - 128.7¢</div>
-                  </div>
-                </div>
-                
-                <!-- DIESEL CARD -->
-                <div class="fuel-card diesel" style="padding: 1.25rem !important;">
-                  <div class="card-header" style="margin-bottom: 1rem !important;">
-                    <span class="fuel-badge">Diésel</span>
-                    <div class="trend-indicator trend-down" id="trend-diesel-indicator">
-                      <span id="trend-diesel-icon">↘</span> <span id="trend-diesel-text">Bajando</span>
+                  
+                  <!-- DIESEL CARD -->
+                  <div class="fuel-card diesel">
+                    <div class="card-header">
+                      <span class="fuel-badge">Diésel</span>
+                      <div class="trend-indicator trend-down" id="trend-diesel-indicator">
+                        <span id="trend-diesel-icon">↘</span> <span id="trend-diesel-text">Bajando</span>
+                      </div>
                     </div>
-                  </div>
-                  <div class="price-display" style="text-align: center; margin-bottom: 0;">
-                    <div class="daco-range-main" id="range-diesel-display">119.7¢ - 128.7¢</div>
+                    <div class="price-display" style="text-align: center; margin-bottom: 0;">
+                      <div class="daco-range-main" id="range-diesel-display">119.7¢ - 128.7¢</div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
+
+            <!-- PANEL 0: ESTACIONES FAVORITAS -->
+            <div class="glass-panel collapsible-panel" id="panel-favorites">
+              <div class="panel-header" onclick="togglePanel('panel-favorites')" style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; padding: 0.75rem 1rem !important; margin-bottom: 0 !important;">
+                <div class="panel-title" style="font-size: 0.85rem !important;">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: var(--color-premium);">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                  </svg>
+                  Estaciones Favoritas
+                </div>
+                <svg class="chevron-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 16px; height: 16px;">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+              <div class="panel-content">
+                <div id="favorites-stations-container" style="margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem; padding: 0.25rem 0;">
+                  <!-- Dynamically populated -->
+                </div>
+              </div>
+            </div>
+
           </div>
 
           <!-- PANEL 2: TENDENCIAS DE PRECIOS -->
@@ -533,12 +555,18 @@
       <!-- VIEW MODE -->
       <div id="profile-view-container" style="display: block;">
         <div class="modal-body">
-          <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
-            <div class="station-brand-icon" id="profile-brand-icon" style="width: 42px; height: 42px; font-size: 1.1rem;">P</div>
-            <div>
-              <h4 style="font-family: var(--font-title); font-size: 1.15rem; font-weight: 800; margin: 0;" id="profile-station-name">Puma Ave. Esmeralda</h4>
-              <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.1rem;" id="profile-station-address">Ave. Esmeralda #42, Guaynabo</p>
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 1rem; width: 100%;">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <div class="station-brand-icon" id="profile-brand-icon" style="width: 42px; height: 42px; font-size: 1.1rem;">P</div>
+              <div>
+                <h4 style="font-family: var(--font-title); font-size: 1.15rem; font-weight: 800; margin: 0;" id="profile-station-name">Puma Ave. Esmeralda</h4>
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.1rem;" id="profile-station-address">Ave. Esmeralda #42, Guaynabo</p>
+              </div>
             </div>
+            <!-- FAVORITE ACTION SYMBOL (➕/➖) -->
+            <button id="profile-favorite-toggle-btn" onclick="toggleProfileFavorite()">
+              ➕
+            </button>
           </div>
 
           <!-- Price Display Section -->

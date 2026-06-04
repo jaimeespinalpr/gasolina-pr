@@ -328,10 +328,14 @@ function toggleFavoriteStation(stationId) {
     showToast('Estación eliminada de favoritas.', 'success');
   } else {
     favorites.push(stationId);
-    showToast('⭐ Estación agregada a favoritas (Guardado localmente).', 'success');
+    showToast('⭐ Estación agregada a favoritas.', 'success');
   }
   localStorage.setItem('gasolinapr_favorites', JSON.stringify(favorites));
   renderStationsGrid();
+  renderFavoritesPanel();
+  if (activeProfileStationId === stationId) {
+    updateProfileFavoriteButtonState();
+  }
 }
 
 function ensureStationAmenities(station) {
@@ -625,6 +629,7 @@ function renderDashboard() {
   updateTrendIndicator('regular', latestHistory.regular, previousHistory.regular);
   updateTrendIndicator('premium', latestHistory.premium, previousHistory.premium);
   updateTrendIndicator('diesel', latestHistory.diesel, previousHistory.diesel);
+  renderFavoritesPanel();
 }
 
 // --- Render Wholesalers List (Vertical Cards) ---
@@ -763,8 +768,8 @@ function renderStationsGrid() {
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="width:10px; height:10px;"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                 Actualizar
               </button>
-              <button class="btn-card-action" onclick="toggleFavoriteStation('${station.id}')" style="margin-top: 0.5rem; padding: 0.35rem 0.6rem; font-size: 0.65rem; border: none; color: ${isFavorite(station.id) ? '#ffffff' : 'var(--color-premium)'}; background: ${isFavorite(station.id) ? 'var(--color-premium)' : 'rgba(245, 158, 11, 0.08)'}; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25); font-weight: 800; border-radius: 8px; display: inline-flex; align-items: center; gap: 0.2rem; transition: var(--transition-fast);">
-                <span>${isFavorite(station.id) ? '★' : '☆'}</span> Favorita
+              <button class="btn-card-action" onclick="toggleFavoriteStation('${station.id}')" style="margin-top: 0.5rem; padding: 0.35rem 0.6rem; font-size: 0.65rem; border: none; color: white; background: ${isFavorite(station.id) ? 'var(--color-danger)' : 'var(--color-success)'}; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25); font-weight: 800; border-radius: 8px; display: inline-flex; align-items: center; gap: 0.2rem; transition: var(--transition-fast);">
+                <span>${isFavorite(station.id) ? '➖' : '➕'}</span> Favorita
               </button>
               <button class="btn-card-action" onclick="openProfileModal('${station.id}')" style="margin-top: 0.5rem; padding: 0.35rem 0.6rem; font-size: 0.65rem; border: none; color: white; background: var(--color-accent); box-shadow: 0 4px 10px rgba(99, 102, 241, 0.25); font-weight: 800; border-radius: 8px; display: inline-flex; align-items: center; gap: 0.2rem; transition: var(--transition-fast);">
                 <span>📋</span> Perfil
@@ -2480,6 +2485,7 @@ function openProfileModal(stationId) {
 
   // Toggle view layout to Read Mode
   switchProfileToViewMode();
+  updateProfileFavoriteButtonState();
 
   // Open Modal Overlay
   const modal = document.getElementById('profile-modal');
@@ -2568,6 +2574,99 @@ function handleProfileEditSubmit(e) {
   openProfileModal(stationId);
   renderStationsGrid();
 }
+
+// ==========================================
+// Phase 10: Favorites Panel & Profile Buttons
+// ==========================================
+
+function toggleProfileFavorite() {
+  if (!activeProfileStationId) return;
+  toggleFavoriteStation(activeProfileStationId);
+}
+
+function updateProfileFavoriteButtonState() {
+  const btn = document.getElementById('profile-favorite-toggle-btn');
+  if (!btn || !activeProfileStationId) return;
+  
+  const isFav = favorites.includes(activeProfileStationId);
+  if (isFav) {
+    btn.textContent = '➖';
+    btn.style.backgroundColor = 'var(--color-danger)';
+    btn.title = 'Remover de favoritas';
+  } else {
+    btn.textContent = '➕';
+    btn.style.backgroundColor = 'var(--color-success)';
+    btn.title = 'Añadir a favoritas';
+  }
+}
+
+function renderFavoritesPanel() {
+  const container = document.getElementById('favorites-stations-container');
+  if (!container) return;
+  container.innerHTML = '';
+  
+  if (favorites.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 1.5rem 1rem; color: var(--text-muted); font-size: 0.8rem; font-weight: bold; background: rgba(255,255,255,0.01); border-radius: 12px; border: 1px dashed var(--border-color);">
+        ⭐ No tienes estaciones favoritas registradas.<br>
+        <span style="font-size: 0.7rem; font-weight: normal; display:block; margin-top: 0.25rem;">Búscalas en el Directorio y pulsa ➕ en sus perfiles para agregarlas aquí.</span>
+      </div>
+    `;
+    return;
+  }
+  
+  favorites.forEach(favId => {
+    const station = stations.find(s => s.id === favId);
+    if (!station) return;
+    
+    const row = document.createElement('div');
+    row.className = 'favorite-station-row';
+    row.style.display = 'flex';
+    row.style.alignItems = 'center';
+    row.style.justifyContent = 'space-between';
+    row.style.padding = '0.65rem 0.85rem';
+    row.style.border = '1px solid var(--border-color)';
+    row.style.borderRadius = '12px';
+    row.style.background = 'var(--bg-card)';
+    row.style.gap = '0.5rem';
+    row.style.marginBottom = '0.4rem';
+    row.style.boxShadow = '0 2px 6px rgba(0,0,0,0.15)';
+    row.style.transition = 'var(--transition-fast)';
+    
+    const brandClass = station.brand.toLowerCase().replace(/\s/g, '');
+    const firstLetter = station.brand.charAt(0).toUpperCase();
+    
+    row.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 0;">
+        <div class="station-brand-icon ${brandClass}" style="width: 28px; height: 28px; font-size: 0.75rem; flex-shrink: 0;">${firstLetter}</div>
+        <div style="min-width: 0;">
+          <strong style="font-size: 0.75rem; color: var(--text-primary); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer;" onclick="openProfileModal('${station.id}')" title="Ver Perfil">${station.name}</strong>
+          <span style="font-size: 0.6rem; color: var(--text-muted); display: block;">${station.municipality}</span>
+        </div>
+      </div>
+      <div style="display: flex; gap: 0.6rem; align-items: center; flex-shrink: 0;">
+        <div style="text-align: right;">
+          <span style="font-size: 0.55rem; color: var(--color-regular); display: block; text-transform: uppercase; font-weight: 700;">Reg</span>
+          <strong style="font-size: 0.75rem; color: var(--text-primary);">${formatPrice(station.prices.regular)}</strong>
+        </div>
+        <div style="text-align: right;">
+          <span style="font-size: 0.55rem; color: var(--color-premium); display: block; text-transform: uppercase; font-weight: 700;">Prem</span>
+          <strong style="font-size: 0.75rem; color: var(--text-primary);">${formatPrice(station.prices.premium)}</strong>
+        </div>
+        <button class="btn-card-action danger" onclick="removeFavoriteFromDashboard('${station.id}', event)" style="padding: 0.2rem 0.4rem; font-size: 0.65rem; border-radius: 6px; border: none; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; background: rgba(239, 68, 68, 0.08); color: var(--color-danger); font-weight: bold; transition: var(--transition-fast);" title="Remover de favoritas">
+          ➖
+        </button>
+      </div>
+    `;
+    container.appendChild(row);
+  });
+}
+
+function removeFavoriteFromDashboard(stationId, event) {
+  if (event) event.stopPropagation();
+  toggleFavoriteStation(stationId);
+}
+
 
 
 
