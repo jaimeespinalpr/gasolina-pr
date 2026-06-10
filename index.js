@@ -2540,55 +2540,7 @@ function updateMapMarkers() {
   });
 }
 
-// Simulate sync call with Google Maps / Waze API networks
-function syncWithWazeAndGoogleMaps() {
-  const syncStatus = document.getElementById('waze-sync-status');
-  const syncBtn = document.getElementById('btn-sync-waze');
-  
-  if (syncStatus) syncStatus.style.display = 'block';
-  if (syncBtn) {
-    syncBtn.disabled = true;
-    syncBtn.style.opacity = '0.5';
-  }
-
-  showToast('📡 Consultando red de Google Maps & Waze API...', 'info');
-
-  setTimeout(() => {
-    if (syncStatus) syncStatus.style.display = 'none';
-    if (syncBtn) {
-      syncBtn.disabled = false;
-      syncBtn.style.opacity = '1';
-    }
-
-    // Filter out stations that have already been imported
-    const newStationsToImport = wazeSyncPool.filter(wazeSt => {
-      return !stations.some(s => s.name.toLowerCase() === wazeSt.name.toLowerCase());
-    });
-
-    if (newStationsToImport.length > 0) {
-      // Ensure amenities exist and mark them as unverified from sync
-      newStationsToImport.forEach(s => {
-        ensureStationAmenities(s);
-        s.verified = false;
-        s.reportedAt = 'Sincronizado vía Waze';
-      });
-      
-      // Import them
-      stations = [...newStationsToImport, ...stations];
-      localStorage.setItem('gasolinapr_stations', JSON.stringify(stations));
-
-      showToast(`📡 ¡Sincronización de Maps/Waze completada! Se importaron ${newStationsToImport.length} nuevas gasolineras en Puerto Rico.`, 'success');
-      
-      // Refresh UI state
-      renderDashboard();
-      renderStationsGrid();
-      populateStationSelects();
-      renderRankings();
-    } else {
-      showToast('📡 Google Maps & Waze ya se encuentran al día. No se detectaron nuevas estaciones.', 'info');
-    }
-  }, 2500); // 2.5 seconds scanner animation
-}
+// Sincronización con Waze y Google Maps removida del header, manteniendo sólo acceso a mapas en el botón Viajar.
 
 // Profile Modal Controller Actions
 let activeProfileStationId = null;
