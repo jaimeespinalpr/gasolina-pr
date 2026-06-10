@@ -90,6 +90,7 @@ const defaultStations = [
     prices: { regular: 108.7, premium: 119.7, diesel: 120.7 },
     reportedAt: 'Hace 2 horas',
     isCommunity: false,
+    verified: true,
     coords: { lat: 18.3789, lon: -66.1112 }
   },
   {
@@ -101,6 +102,7 @@ const defaultStations = [
     prices: { regular: 107.7, premium: 116.7, diesel: 119.7 },
     reportedAt: 'Hace 1 hora',
     isCommunity: false,
+    verified: true,
     coords: { lat: 18.3812, lon: -66.1287 }
   },
   {
@@ -112,6 +114,7 @@ const defaultStations = [
     prices: { regular: 109.7, premium: 122.7, diesel: 121.7 },
     reportedAt: 'Hace 3 horas',
     isCommunity: false,
+    verified: true,
     coords: { lat: 18.4110, lon: -66.0968 }
   },
   {
@@ -123,6 +126,7 @@ const defaultStations = [
     prices: { regular: 107.9, premium: 115.9, diesel: 119.9 },
     reportedAt: 'Hace 4 horas',
     isCommunity: false,
+    verified: true,
     coords: { lat: 18.3615, lon: -66.0792 }
   },
   {
@@ -134,6 +138,7 @@ const defaultStations = [
     prices: { regular: 110.7, premium: 124.7, diesel: 122.7 },
     reportedAt: 'Hace 5 horas',
     isCommunity: false,
+    verified: true,
     coords: { lat: 18.4234, lon: -66.0754 }
   },
   {
@@ -145,6 +150,7 @@ const defaultStations = [
     prices: { regular: 109.7, premium: 122.7, diesel: 120.7 },
     reportedAt: 'Hace 30 mins',
     isCommunity: false,
+    verified: true,
     coords: { lat: 18.3712, lon: -66.0888 }
   },
   {
@@ -156,6 +162,7 @@ const defaultStations = [
     prices: { regular: 107.7, premium: 117.7, diesel: 119.7 },
     reportedAt: 'Hace 6 horas',
     isCommunity: false,
+    verified: true,
     coords: { lat: 18.4145, lon: -66.0694 }
   },
   {
@@ -167,6 +174,7 @@ const defaultStations = [
     prices: { regular: 110.7, premium: 124.7, diesel: 122.7 },
     reportedAt: 'Hace 12 horas',
     isCommunity: false,
+    verified: false,
     coords: { lat: 18.3745, lon: -66.1712 }
   },
   {
@@ -178,6 +186,7 @@ const defaultStations = [
     prices: { regular: 108.7, premium: 118.7, diesel: 120.7 },
     reportedAt: 'Hace 7 horas',
     isCommunity: false,
+    verified: false,
     coords: { lat: 18.2324, lon: -66.0468 }
   },
   {
@@ -189,6 +198,7 @@ const defaultStations = [
     prices: { regular: 108.7, premium: 120.7, diesel: 120.7 },
     reportedAt: 'Hace 8 horas',
     isCommunity: false,
+    verified: false,
     coords: { lat: 18.0124, lon: -66.5987 }
   },
   {
@@ -200,6 +210,7 @@ const defaultStations = [
     prices: { regular: 107.9, premium: 117.9, diesel: 119.9 },
     reportedAt: 'Hace 9 horas',
     isCommunity: false,
+    verified: false,
     coords: { lat: 18.2145, lon: -67.1412 }
   },
   {
@@ -211,6 +222,7 @@ const defaultStations = [
     prices: { regular: 110.7, premium: 123.7, diesel: 122.7 },
     reportedAt: 'Hace 10 horas',
     isCommunity: false,
+    verified: false,
     coords: { lat: 18.3812, lon: -65.9687 }
   },
   {
@@ -222,6 +234,7 @@ const defaultStations = [
     prices: { regular: 111.7, premium: 126.7, diesel: 123.7 },
     reportedAt: 'Hace 1 hora',
     isCommunity: false,
+    verified: true,
     coords: { lat: 18.4712, lon: -66.2754 }
   },
   {
@@ -233,6 +246,7 @@ const defaultStations = [
     prices: { regular: 107.7, premium: 121.7, diesel: 120.7 },
     reportedAt: 'Hace 23 horas',
     isCommunity: false,
+    verified: false,
     coords: { lat: 18.4512, lon: -66.7412 }
   },
   {
@@ -244,9 +258,10 @@ const defaultStations = [
     prices: { regular: 110.7, premium: 128.7, diesel: 126.7 },
     reportedAt: 'Hace 1 día',
     isCommunity: false,
+    verified: false,
     coords: { lat: 18.1512, lon: -65.8287 }
   }
-];
+];;
 
 // --- Historical Prices (Past 4 Weeks) ---
 const priceHistory = [
@@ -379,10 +394,29 @@ function loadStations() {
     stations = [...defaultStations];
   }
   
-  // Seed amenities for all stations dynamically
-  stations.forEach(s => ensureStationAmenities(s));
-  localStorage.setItem('gasolinapr_stations', JSON.stringify(stations));
+  // Seed amenities and verification fields for all stations dynamically
+  stations.forEach(s => {
+    ensureStationAmenities(s);
+    if (s.verified === undefined) {
+      if (s.isCommunity || 
+          s.reportedAt.includes('min') || 
+          s.reportedAt.includes('instantes') ||
+          s.reportedAt.includes('1 hora') || 
+          s.reportedAt.includes('2 horas') || 
+          s.reportedAt.includes('3 horas') ||
+          s.reportedAt.includes('4 horas') ||
+          s.reportedAt.includes('5 horas') ||
+          s.reportedAt.includes('Confirmado') ||
+          s.reportedAt.includes('Escaneado') ||
+          s.reportedAt.includes('Local')) {
+        s.verified = true;
+      } else {
+        s.verified = false;
+      }
+    }
+  });
   
+  localStorage.setItem('gasolinapr_stations', JSON.stringify(stations));
   loadFavorites();
 }
 
@@ -456,6 +490,17 @@ function formatPrice(priceInCentsL) {
 
 function getUnitLabel() {
   return '/L';
+}
+
+function getFormattedDateTime() {
+  const date = new Date();
+  return date.toLocaleString('es-PR', {
+    day: 'numeric',
+    month: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  });
 }
 
 function getTrendMeta(current, previous) {
@@ -735,7 +780,7 @@ function renderStationsGrid() {
 
   filtered.forEach(station => {
     const card = document.createElement('div');
-    card.className = 'station-card';
+    card.className = `station-card ${station.verified ? 'verified' : 'unverified'}`;
     card.id = `card-${station.id}`;
     
     const isCheapest = station.prices[fuelTypeToHighlight] === cheapestVal;
@@ -789,6 +834,11 @@ function renderStationsGrid() {
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="width:10px; height:10px;"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                 Actualizar
               </button>
+              ${!station.verified ? `
+              <button class="btn-card-action" onclick="confirmStationPrices('${station.id}')" style="margin-top: 0.5rem; padding: 0.35rem 0.6rem; font-size: 0.65rem; border: none; color: white; background: var(--color-unverified); box-shadow: 0 4px 10px var(--color-unverified-glow); font-weight: 800; border-radius: 8px; display: inline-flex; align-items: center; gap: 0.2rem; transition: var(--transition-fast);">
+                <span>✓</span> Confirmar
+              </button>
+              ` : ''}
               <button class="btn-card-action" onclick="toggleFavoriteStation('${station.id}')" style="margin-top: 0.5rem; padding: 0.35rem 0.6rem; font-size: 0.65rem; border: none; color: white; background: ${isFavorite(station.id) ? 'var(--color-danger)' : 'var(--color-success)'}; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25); font-weight: 800; border-radius: 8px; display: inline-flex; align-items: center; gap: 0.2rem; transition: var(--transition-fast);">
                 <span>${isFavorite(station.id) ? '➖' : '➕'}</span> Favorita
               </button>
@@ -826,7 +876,7 @@ function renderStationsGrid() {
             </td>
             <td>
               <div class="price-value-stack" style="padding-right: 0.35rem;">
-                <strong class="price-value ${fuelTypeToHighlight === 'regular' && isCheapest ? 'cheap' : ''} ${violatesRegular ? 'danger' : ''}">${formatPrice(station.prices.regular)}</strong>
+                <strong class="price-value ${!station.verified ? 'unverified-price' : ''} ${fuelTypeToHighlight === 'regular' && isCheapest ? 'cheap' : ''} ${violatesRegular ? 'danger' : ''}">${formatPrice(station.prices.regular)}</strong>
                 ${renderTrendChip(station.prices.regular, getStationPreviousPrice(station.id, 'regular'))}
               </div>
             </td>
@@ -839,7 +889,7 @@ function renderStationsGrid() {
             </td>
             <td>
               <div class="price-value-stack" style="padding-right: 0.35rem;">
-                <strong class="price-value ${fuelTypeToHighlight === 'premium' && isCheapest ? 'cheap' : ''} ${violatesPremium ? 'danger' : ''}">${formatPrice(station.prices.premium)}</strong>
+                <strong class="price-value ${!station.verified ? 'unverified-price' : ''} ${fuelTypeToHighlight === 'premium' && isCheapest ? 'cheap' : ''} ${violatesPremium ? 'danger' : ''}">${formatPrice(station.prices.premium)}</strong>
                 ${renderTrendChip(station.prices.premium, getStationPreviousPrice(station.id, 'premium'))}
               </div>
             </td>
@@ -852,7 +902,7 @@ function renderStationsGrid() {
             </td>
             <td>
               <div class="price-value-stack" style="padding-right: 0.35rem;">
-                <strong class="price-value ${fuelTypeToHighlight === 'diesel' && isCheapest ? 'cheap' : ''} ${violatesDiesel ? 'danger' : ''}">${formatPrice(station.prices.diesel)}</strong>
+                <strong class="price-value ${!station.verified ? 'unverified-price' : ''} ${fuelTypeToHighlight === 'diesel' && isCheapest ? 'cheap' : ''} ${violatesDiesel ? 'danger' : ''}">${formatPrice(station.prices.diesel)}</strong>
                 ${renderTrendChip(station.prices.diesel, getStationPreviousPrice(station.id, 'diesel'))}
               </div>
             </td>
@@ -861,13 +911,13 @@ function renderStationsGrid() {
       </table>
       
       <div class="station-footer" style="padding-bottom: 1rem;">
-        <div class="station-reported-badge">
+        <div class="station-reported-badge" style="color: ${station.verified ? 'var(--text-secondary)' : 'var(--color-unverified)'};">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <span>${station.reportedAt}</span>
+          <span>${station.verified ? station.reportedAt : `Falta confirmar (${station.reportedAt})`}</span>
         </div>
-        ${station.isCommunity ? `<span style="color: var(--color-accent); font-weight: 600; font-size: 0.7rem;">Comunidad</span>` : `<span style="color: var(--text-muted); font-size: 0.7rem;">Verificado</span>`}
+        ${station.isCommunity ? `<span style="color: var(--color-accent); font-weight: 600; font-size: 0.7rem;">Comunidad</span>` : (station.verified ? `<span style="color: var(--color-success); font-size: 0.7rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.15rem;">✓ 100% Real</span>` : `<span style="color: var(--color-unverified); font-size: 0.7rem; font-weight: 700; display: inline-flex; align-items: center; gap: 0.15rem;">⚠️ Falta confirmar</span>`)}
       </div>
 
       <!-- COLLAPSIBLE RAPID INLINE PRICE EDITOR -->
@@ -957,7 +1007,8 @@ function saveInlinePrices(stationId) {
   if (index !== -1) {
     if (!navigator.onLine) {
       stations[index].prices = { regular: priceReg, premium: pricePrem, diesel: priceDsl };
-      stations[index].reportedAt = 'Guardado offline (Local)';
+      stations[index].reportedAt = 'Local: ' + getFormattedDateTime();
+      stations[index].verified = true;
       stations[index].isCommunity = true;
       
       localStorage.setItem('gasolinapr_stations', JSON.stringify(stations));
@@ -995,7 +1046,8 @@ function saveInlinePrices(stationId) {
     }
 
     stations[index].prices = { regular: priceReg, premium: pricePrem, diesel: priceDsl };
-    stations[index].reportedAt = 'Actualizado hace unos instantes';
+    stations[index].reportedAt = 'Confirmado: ' + getFormattedDateTime();
+    stations[index].verified = true;
     stations[index].isCommunity = true;
     
     localStorage.setItem('gasolinapr_stations', JSON.stringify(stations));
@@ -1006,6 +1058,22 @@ function saveInlinePrices(stationId) {
     populateStationSelects();
     
     showToast(`¡Bomba de ${stations[index].name} actualizada en vivo!`, 'success');
+  }
+}
+
+// --- Confirm Station Prices (Fase 13) ---
+function confirmStationPrices(stationId) {
+  const index = stations.findIndex(s => s.id === stationId);
+  if (index !== -1) {
+    stations[index].verified = true;
+    stations[index].reportedAt = 'Confirmado: ' + getFormattedDateTime();
+    localStorage.setItem('gasolinapr_stations', JSON.stringify(stations));
+    
+    // Refresh GUI
+    renderDashboard();
+    renderStationsGrid();
+    
+    showToast(`✓ Precios de ${stations[index].name} confirmados como 100% Real.`, 'success');
   }
 }
 
@@ -1448,7 +1516,8 @@ function handleReportSubmit(e) {
       existingStation.prices.regular = priceReg;
       existingStation.prices.premium = pricePrem;
       existingStation.prices.diesel = priceDsl;
-      existingStation.reportedAt = 'Guardado offline (Local)';
+      existingStation.reportedAt = 'Local: ' + getFormattedDateTime();
+      existingStation.verified = true;
       existingStation.isCommunity = true;
     } else {
       existingStation = {
@@ -1462,7 +1531,8 @@ function handleReportSubmit(e) {
           premium: pricePrem,
           diesel: priceDsl
         },
-        reportedAt: 'Guardado offline (Local)',
+        reportedAt: 'Local: ' + getFormattedDateTime(),
+        verified: true,
         isCommunity: true
       };
       stations.unshift(existingStation);
@@ -1481,7 +1551,8 @@ function handleReportSubmit(e) {
     station.prices.regular = priceReg;
     station.prices.premium = pricePrem;
     station.prices.diesel = priceDsl;
-    station.reportedAt = 'Hace unos instantes';
+    station.reportedAt = 'Confirmado: ' + getFormattedDateTime();
+    station.verified = true;
     station.isCommunity = true;
   } else {
     station = {
@@ -1495,7 +1566,8 @@ function handleReportSubmit(e) {
         premium: pricePrem,
         diesel: priceDsl
       },
-      reportedAt: 'Hace unos instantes',
+      reportedAt: 'Confirmado: ' + getFormattedDateTime(),
+      verified: true,
       isCommunity: true
     };
     stations.unshift(station);
@@ -1966,7 +2038,8 @@ function processPumpPhoto(stationId, event) {
         premium: simulatedPremium,
         diesel: simulatedDiesel
       };
-      stations[index].reportedAt = 'Escaneado por IA en bomba hace unos instantes';
+      stations[index].reportedAt = 'Escaneado: ' + getFormattedDateTime();
+      stations[index].verified = true;
       stations[index].isCommunity = true;
       
       localStorage.setItem('gasolinapr_stations', JSON.stringify(stations));
@@ -2120,7 +2193,8 @@ function syncOfflineData() {
         station.prices.regular = report.prices.regular;
         station.prices.premium = report.prices.premium;
         station.prices.diesel = report.prices.diesel;
-        station.reportedAt = 'Sincronizado desde cola local';
+        station.reportedAt = 'Confirmado: ' + getFormattedDateTime();
+        station.verified = true;
         station.isCommunity = true;
       } else {
         station = {
@@ -2130,7 +2204,8 @@ function syncOfflineData() {
           municipality: report.municipality,
           address: report.address,
           prices: report.prices,
-          reportedAt: 'Sincronizado desde cola local',
+          reportedAt: 'Confirmado: ' + getFormattedDateTime(),
+          verified: true,
           isCommunity: true
         };
         stations.unshift(station);
@@ -2359,6 +2434,7 @@ const wazeSyncPool = [
     prices: { regular: 106.7, premium: 118.7, diesel: 119.7 },
     reportedAt: 'Sincronizado vía Maps/Waze',
     isCommunity: false,
+    verified: false,
     coords: { lat: 18.4724, lon: -66.7157 }
   },
   {
@@ -2370,6 +2446,7 @@ const wazeSyncPool = [
     prices: { regular: 107.7, premium: 116.7, diesel: 118.7 },
     reportedAt: 'Sincronizado vía Maps/Waze',
     isCommunity: false,
+    verified: false,
     coords: { lat: 18.3361, lon: -65.6319 }
   },
   {
@@ -2381,6 +2458,7 @@ const wazeSyncPool = [
     prices: { regular: 109.7, premium: 121.7, diesel: 120.7 },
     reportedAt: 'Sincronizado vía Maps/Waze',
     isCommunity: false,
+    verified: false,
     coords: { lat: 18.1501, lon: -65.8272 }
   },
   {
@@ -2392,6 +2470,7 @@ const wazeSyncPool = [
     prices: { regular: 105.7, premium: 115.7, diesel: 117.7 },
     reportedAt: 'Sincronizado vía Maps/Waze',
     isCommunity: false,
+    verified: false,
     coords: { lat: 18.4589, lon: -66.2622 }
   },
   {
@@ -2403,6 +2482,7 @@ const wazeSyncPool = [
     prices: { regular: 108.7, premium: 119.7, diesel: 119.7 },
     reportedAt: 'Sincronizado vía Maps/Waze',
     isCommunity: false,
+    verified: false,
     coords: { lat: 18.3845, lon: -65.9734 }
   }
 ];
@@ -2486,8 +2566,12 @@ function syncWithWazeAndGoogleMaps() {
     });
 
     if (newStationsToImport.length > 0) {
-      // Ensure amenities exist
-      newStationsToImport.forEach(s => ensureStationAmenities(s));
+      // Ensure amenities exist and mark them as unverified from sync
+      newStationsToImport.forEach(s => {
+        ensureStationAmenities(s);
+        s.verified = false;
+        s.reportedAt = 'Sincronizado vía Waze';
+      });
       
       // Import them
       stations = [...newStationsToImport, ...stations];
@@ -2711,18 +2795,20 @@ function renderFavoritesPanel() {
       <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 0;">
         <div class="station-brand-icon ${brandClass}" style="width: 28px; height: 28px; font-size: 0.75rem; flex-shrink: 0;">${firstLetter}</div>
         <div style="min-width: 0;">
-          <strong style="font-size: 0.75rem; color: var(--text-primary); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer;" onclick="openProfileModal('${station.id}')" title="Ver Perfil">${station.name}</strong>
+          <strong style="font-size: 0.75rem; color: var(--text-primary); display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer;" onclick="openProfileModal('${station.id}')" title="Ver Perfil">
+            ${station.name} ${!station.verified ? `<span style="color: var(--color-unverified);" title="Falta confirmar">⚠️</span>` : ''}
+          </strong>
           <span style="font-size: 0.6rem; color: var(--text-muted); display: block;">${station.municipality}</span>
         </div>
       </div>
       <div style="display: flex; gap: 0.6rem; align-items: center; flex-shrink: 0;">
         <div style="text-align: right;">
           <span style="font-size: 0.55rem; color: var(--color-regular); display: block; text-transform: uppercase; font-weight: 700;">Reg</span>
-          <strong style="font-size: 0.75rem; color: var(--text-primary);">${formatPrice(station.prices.regular)}</strong>
+          <strong class="${!station.verified ? 'unverified-price' : ''}" style="font-size: 0.75rem; color: var(--text-primary);">${formatPrice(station.prices.regular)}</strong>
         </div>
         <div style="text-align: right;">
           <span style="font-size: 0.55rem; color: var(--color-premium); display: block; text-transform: uppercase; font-weight: 700;">Prem</span>
-          <strong style="font-size: 0.75rem; color: var(--text-primary);">${formatPrice(station.prices.premium)}</strong>
+          <strong class="${!station.verified ? 'unverified-price' : ''}" style="font-size: 0.75rem; color: var(--text-primary);">${formatPrice(station.prices.premium)}</strong>
         </div>
         <button class="btn-card-action danger" onclick="removeFavoriteFromDashboard('${station.id}', event)" style="padding: 0.2rem 0.4rem; font-size: 0.65rem; border-radius: 6px; border: none; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; background: rgba(239, 68, 68, 0.08); color: var(--color-danger); font-weight: bold; transition: var(--transition-fast);" title="Remover de favoritas">
           ➖

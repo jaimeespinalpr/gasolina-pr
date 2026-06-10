@@ -354,6 +354,22 @@
           </button>
         </div>
 
+        <!-- VERIFICATION STATE LEGEND -->
+        <div class="verification-legend" style="display: flex; gap: 1rem; align-items: center; justify-content: center; flex-wrap: wrap; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); padding: 0.65rem 1.25rem; border-radius: 20px; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 1.25rem; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);">
+          <div style="font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 0.35rem;">
+            <span>ℹ️</span> Estado de Datos:
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.35rem;">
+            <span style="color: var(--color-success); font-weight: 700;">✓ Verificado (100% Real)</span>
+            <span style="color: var(--text-muted); font-size: 0.65rem;">(Bomba confirmada recientemente)</span>
+          </div>
+          <div style="width: 1px; height: 12px; background: var(--border-color); display: inline-block;"></div>
+          <div style="display: flex; align-items: center; gap: 0.35rem;">
+            <span style="color: var(--color-unverified); font-weight: 700;">⚠️ Falta confirmar</span>
+            <span style="color: var(--text-muted); font-size: 0.65rem;">(Precios sin verificar en campo)</span>
+          </div>
+        </div>
+
         <!-- STATIONS GRID -->
         <div class="stations-grid" id="stations-grid-container">
           <!-- Populated dynamically via index.js -->
