@@ -284,24 +284,39 @@ document.addEventListener('DOMContentLoaded', async () => {
 function handleHashRouting() {
   const hash = window.location.hash || '#/dashboard';
   
-  if (hash === '#/directory') {
+  if (hash.startsWith('#/station/')) {
+    const stationId = hash.split('#/station/')[1];
     lastActiveSection = 'directory';
     closeReportModal(false);
     navigateTo('directory', false);
-  } else if (hash === '#/calculators') {
-    lastActiveSection = 'calculators';
-    closeReportModal(false);
-    navigateTo('calculators', false);
-  } else if (hash === '#/rankings') {
-    lastActiveSection = 'rankings';
-    closeReportModal(false);
-    navigateTo('rankings', false);
-  } else if (hash === '#/denuncia') {
-    openReportModal(false);
+    
+    // Wait for render to complete, then open profile
+    setTimeout(() => {
+      openProfileModal(stationId);
+    }, 100);
   } else {
-    lastActiveSection = 'dashboard';
-    closeReportModal(false);
-    navigateTo('dashboard', false);
+    // Ensure the profile modal is closed if we're not on a station route
+    closeProfileModal(false);
+    
+    if (hash === '#/directory') {
+      lastActiveSection = 'directory';
+      closeReportModal(false);
+      navigateTo('directory', false);
+    } else if (hash === '#/calculators') {
+      lastActiveSection = 'calculators';
+      closeReportModal(false);
+      navigateTo('calculators', false);
+    } else if (hash === '#/rankings') {
+      lastActiveSection = 'rankings';
+      closeReportModal(false);
+      navigateTo('rankings', false);
+    } else if (hash === '#/denuncia') {
+      openReportModal(false);
+    } else {
+      lastActiveSection = 'dashboard';
+      closeReportModal(false);
+      navigateTo('dashboard', false);
+    }
   }
 }
 
@@ -2536,6 +2551,11 @@ function openProfileModal(stationId) {
   const modal = document.getElementById('profile-modal');
   modal.classList.add('active');
   document.body.style.overflow = 'hidden';
+
+  // Update hash if not already pointing to it
+  if (window.location.hash !== `#/station/${stationId}`) {
+    window.location.hash = `#/station/${stationId}`;
+  }
 }
 
 function toggleAmenityClass(elementId, isActive) {
@@ -2577,9 +2597,15 @@ function switchProfileToViewMode() {
   document.getElementById('profile-edit-form').style.display = 'none';
 }
 
-function closeProfileModal() {
+function closeProfileModal(updateHash = true) {
+  if (updateHash) {
+    window.location.hash = `#/${lastActiveSection}`;
+    return;
+  }
   const modal = document.getElementById('profile-modal');
-  modal.classList.remove('active');
+  if (modal) {
+    modal.classList.remove('active');
+  }
   document.body.style.overflow = '';
   activeProfileStationId = null;
 }
@@ -2831,6 +2857,236 @@ function clearBestPricesFilter() {
   autoSortStationsByProximity(); // This will auto-sort closest and render
   
   showToast("📍 Filtros de mejores precios restablecidos.", "success");
+}
+
+// --- Profile Sharing Logic ---
+let activeShareImageUrl = null;
+let activeShareStation = null;
+
+async function openShareModalFromProfile() {
+  if (!activeProfileStationId) return;
+  const station = stations.find(s => s.id === activeProfileStationId);
+  if (!station) return;
+  
+  activeShareStation = station;
+  
+  // Show toast to notify user that the social card is generating
+  showToast("🎨 Generando tarjeta de precios para compartir...", "success");
+  
+  // Generate beautiful canvas image
+  activeShareImageUrl = await generateStationShareImage(station);
+  
+  // Update preview image
+  const previewImg = document.getElementById('share-card-preview-img');
+  if (previewImg) previewImg.src = activeShareImageUrl;
+  
+  // Toggle visible Native Share API button based on browser capability
+  const nativeBtn = document.getElementById('share-native-btn');
+  if (nativeBtn) {
+    if (navigator.share) {
+      nativeBtn.style.display = 'flex';
+    } else {
+      nativeBtn.style.display = 'none';
+    }
+  }
+  
+  // Open Share Modal
+  const modal = document.getElementById('share-modal');
+  if (modal) {
+    modal.classList.add('active');
+  }
+}
+
+function closeShareModal() {
+  const modal = document.getElementById('share-modal');
+  if (modal) {
+    modal.classList.remove('active');
+  }
+}
+
+// Generate the beautiful social card dynamically via canvas
+function generateStationShareImage(station) {
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 800;
+    canvas.height = 450;
+    const ctx = canvas.getContext('2d');
+    
+    // 1. Background Gradient
+    const gradient = ctx.createLinearGradient(0, 0, 800, 450);
+    gradient.addColorStop(0, '#0f172a');
+    gradient.addColorStop(1, '#1e293b');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 800, 450);
+    
+    // 2. Outer Glass-like Border
+    ctx.strokeStyle = 'rgba(99, 102, 241, 0.3)';
+    ctx.lineWidth = 12;
+    ctx.strokeRect(6, 6, 788, 438);
+    
+    // 3. App Title (Top Right)
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+    ctx.font = 'bold 24px system-ui, -apple-system, sans-serif';
+    ctx.fillText('GasolinaPR · Puerto Rico', 450, 45);
+    
+    // 4. Station Title (Large)
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 36px system-ui, -apple-system, sans-serif';
+    ctx.fillText(station.name, 50, 110);
+    
+    // Address
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '500 20px system-ui, -apple-system, sans-serif';
+    ctx.fillText(`${station.municipality} · ${station.address || ''}`, 50, 145);
+    
+    // Brand Icon Circle
+    const firstLetter = station.brand.charAt(0).toUpperCase();
+    ctx.fillStyle = 'rgba(99, 102, 241, 0.2)';
+    ctx.beginPath();
+    ctx.arc(710, 110, 45, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(99, 102, 241, 0.5)';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    
+    ctx.fillStyle = '#6366f1';
+    ctx.font = 'bold 44px system-ui, -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(firstLetter, 710, 110);
+    
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    
+    // 5. Prices Section
+    const startX = 50;
+    const spacing = 230;
+    const yVal = 260;
+    
+    // Regular
+    ctx.fillStyle = '#10b981'; // green
+    ctx.fillRect(startX, yVal - 50, 180, 8);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 18px system-ui, -apple-system, sans-serif';
+    ctx.fillText('Regular', startX, yVal - 25);
+    ctx.font = 'bold 38px system-ui, -apple-system, sans-serif';
+    ctx.fillText(formatPrice(station.prices.regular), startX, yVal + 25);
+    
+    // Premium
+    ctx.fillStyle = '#f59e0b'; // amber
+    ctx.fillRect(startX + spacing, yVal - 50, 180, 8);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 18px system-ui, -apple-system, sans-serif';
+    ctx.fillText('Premium', startX + spacing, yVal - 25);
+    ctx.font = 'bold 38px system-ui, -apple-system, sans-serif';
+    ctx.fillText(formatPrice(station.prices.premium), startX + spacing, yVal + 25);
+    
+    // Diesel
+    ctx.fillStyle = '#0ea5e9'; // sky blue
+    ctx.fillRect(startX + spacing * 2, yVal - 50, 180, 8);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 18px system-ui, -apple-system, sans-serif';
+    ctx.fillText('Diésel', startX + spacing * 2, yVal - 25);
+    ctx.font = 'bold 38px system-ui, -apple-system, sans-serif';
+    ctx.fillText(formatPrice(station.prices.diesel), startX + spacing * 2, yVal + 25);
+    
+    // 6. Call to Action / Footer
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.font = '14px system-ui, -apple-system, sans-serif';
+    ctx.fillText('Ver precios en vivo en la aplicación:', 50, 395);
+    
+    const appUrl = `${window.location.origin}${window.location.pathname}#/station/${station.id}`;
+    ctx.fillStyle = '#6366f1';
+    ctx.font = 'bold 16px system-ui, -apple-system, sans-serif';
+    ctx.fillText(appUrl, 50, 418);
+    
+    resolve(canvas.toDataURL('image/png'));
+  });
+}
+
+// Share helpers
+function getShareTextAndUrl() {
+  if (!activeShareStation) return { text: '', url: '' };
+  const s = activeShareStation;
+  const appUrl = `${window.location.origin}${window.location.pathname}#/station/${s.id}`;
+  const text = `⛽ *${s.name}* (${s.municipality})\n💰 Reg: ${formatPrice(s.prices.regular)} · Prem: ${formatPrice(s.prices.premium)} · Dsl: ${formatPrice(s.prices.diesel)}\n📍 Consulta la bomba en tiempo real aquí:\n${appUrl}`;
+  return { text, url: appUrl };
+}
+
+// Convert base64 DataURL to Blob
+function dataURLtoBlob(dataurl) {
+  var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+      bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+  while(n--){
+      u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new Blob([u8arr], {type:mime});
+}
+
+// Native share using browser API (if supported)
+async function shareViaNativeApi() {
+  const { text, url } = getShareTextAndUrl();
+  if (!activeShareImageUrl) return;
+  
+  try {
+    const blob = dataURLtoBlob(activeShareImageUrl);
+    const file = new File([blob], `precios-${activeShareStation.id}.png`, { type: 'image/png' });
+    
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: activeShareStation.name,
+        text: text
+      });
+      showToast("¡Compartido con éxito!", "success");
+    } else if (navigator.share) {
+      await navigator.share({
+        title: activeShareStation.name,
+        text: text,
+        url: url
+      });
+      showToast("¡Enlace compartido!", "success");
+    } else {
+      showToast("Tu navegador no soporta el menú nativo de compartir.", "error");
+    }
+  } catch (err) {
+    console.error("Native share error: ", err);
+  }
+}
+
+function shareToWhatsApp() {
+  const { text } = getShareTextAndUrl();
+  const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+  window.open(url, '_blank');
+  showToast("Abriendo WhatsApp...", "success");
+}
+
+function shareToFacebook() {
+  const { url } = getShareTextAndUrl();
+  const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+  window.open(fbUrl, '_blank');
+  showToast("Abriendo Facebook...", "success");
+}
+
+function copyShareLink() {
+  const { url } = getShareTextAndUrl();
+  navigator.clipboard.writeText(url).then(() => {
+    showToast("¡Enlace copiado al portapapeles!", "success");
+  }).catch(() => {
+    showToast("Error al copiar enlace.", "error");
+  });
+}
+
+function downloadShareImage() {
+  if (!activeShareImageUrl || !activeShareStation) return;
+  
+  const a = document.createElement('a');
+  a.href = activeShareImageUrl;
+  a.download = `precios-${activeShareStation.brand.toLowerCase()}-${activeShareStation.municipality.toLowerCase()}.png`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showToast("¡Imagen descargada exitosamente!", "success");
 }
 
 

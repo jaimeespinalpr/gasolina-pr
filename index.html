@@ -665,9 +665,10 @@
           </div>
         </div>
         
-        <div class="modal-footer" style="display: flex; gap: 0.5rem; justify-content: flex-end; align-items: center;">
+        <div class="modal-footer" style="display: flex; gap: 0.5rem; justify-content: flex-end; align-items: center; flex-wrap: wrap;">
           <button type="button" class="btn-secondary" onclick="closeProfileModal()" style="margin-right: auto;">Cerrar</button>
-          <button type="button" class="btn-primary" id="profile-modal-waze-btn" onclick="navigateToWazeFromProfile()" style="background-color: #33a0ff; border-color: #33a0ff; box-shadow: 0 4px 10px rgba(51, 160, 255, 0.25); font-weight: 700; border: none; display: flex; align-items: center; gap: 0.25rem; height: 36px; padding: 0 0.85rem; border-radius: 8px; color: white;">🚙 Viajar con Waze</button>
+          <button type="button" class="btn-primary" id="profile-modal-share-btn" onclick="openShareModalFromProfile()" style="background: linear-gradient(135deg, var(--color-regular), #047857); border: none; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.25); font-weight: 700; display: flex; align-items: center; gap: 0.25rem; height: 36px; padding: 0 0.85rem; border-radius: 8px; color: white; cursor: pointer;">🔗 Compartir</button>
+          <button type="button" class="btn-primary" id="profile-modal-waze-btn" onclick="navigateToWazeFromProfile()" style="background-color: #33a0ff; border-color: #33a0ff; box-shadow: 0 4px 10px rgba(51, 160, 255, 0.25); font-weight: 700; border: none; display: flex; align-items: center; gap: 0.25rem; height: 36px; padding: 0 0.85rem; border-radius: 8px; color: white; cursor: pointer;">🚙 Viajar con Waze</button>
           <button type="button" class="btn-primary" onclick="switchProfileToEditMode()">✏️ Editar Detalles</button>
         </div>
       </div>
@@ -737,6 +738,52 @@
           <button type="submit" class="btn-primary">Guardar Detalles</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- SHARE MODAL -->
+  <div class="modal-overlay" id="share-modal" style="z-index: 2100;">
+    <div class="modal" style="max-width: 480px; padding: 1.5rem;">
+      <div class="modal-header" style="margin-bottom: 1rem;">
+        <h3 class="modal-title">Compartir Gasolinera</h3>
+        <button class="modal-close" onclick="closeShareModal()">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width: 24px; height: 24px;"><path d="M6 18L18 6M6 6l12 12" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+        </button>
+      </div>
+      
+      <div class="modal-body" style="display: flex; flex-direction: column; gap: 1rem; align-items: center;">
+        <!-- Preview of the generated social card -->
+        <div id="share-card-preview-container" style="width: 100%; border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color); box-shadow: 0 4px 15px rgba(0,0,0,0.3); background: #0f172a;">
+          <img id="share-card-preview-img" src="" style="width: 100%; height: auto; display: block;" alt="Precios Gasolinera">
+        </div>
+        
+        <!-- Action Buttons Grid -->
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; width: 100%; margin-top: 0.5rem;">
+          <button class="btn-primary" onclick="shareViaNativeApi()" id="share-native-btn" style="grid-column: 1 / -1; background: linear-gradient(135deg, var(--color-accent), #4f46e5); color: white; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-weight: bold; height: 40px; border-radius: 20px; border: none; cursor: pointer; transition: var(--transition-fast);">
+            📲 Compartir en Redes
+          </button>
+          
+          <button class="btn-secondary" onclick="shareToWhatsApp()" style="background: #25d366; color: white; border: none; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-weight: bold; height: 38px; border-radius: 20px; cursor: pointer; transition: var(--transition-fast);">
+            💬 WhatsApp
+          </button>
+          
+          <button class="btn-secondary" onclick="shareToFacebook()" style="background: #1877f2; color: white; border: none; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-weight: bold; height: 38px; border-radius: 20px; cursor: pointer; transition: var(--transition-fast);">
+            📘 Facebook
+          </button>
+          
+          <button class="btn-secondary" onclick="copyShareLink()" style="background: rgba(255, 255, 255, 0.05); color: var(--text-primary); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-weight: bold; height: 38px; border-radius: 20px; cursor: pointer; transition: var(--transition-fast);">
+            🔗 Copiar Enlace
+          </button>
+          
+          <button class="btn-secondary" onclick="downloadShareImage()" style="background: rgba(255, 255, 255, 0.05); color: var(--text-primary); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-weight: bold; height: 38px; border-radius: 20px; cursor: pointer; transition: var(--transition-fast);">
+            💾 Descargar Imagen
+          </button>
+        </div>
+        
+        <p style="font-size: 0.65rem; color: var(--text-muted); text-align: center; margin-top: 0.25rem; line-height: 1.4;">
+          * Descarga la imagen para compartirla directamente en tu feed o Stories de Instagram, o pulsa "Compartir en Redes" para usar el menú nativo de tu celular.
+        </p>
+      </div>
     </div>
   </div>
 
