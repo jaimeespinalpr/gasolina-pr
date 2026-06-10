@@ -97,14 +97,6 @@
             </svg>
             Precio Actual
           </button>
-
-          <!-- MEJORES PRECIOS BUTTON -->
-          <button class="btn-secondary" onclick="startBestPricesNearMe()" id="desktop-best-prices-btn" style="height: 32px; padding: 0.35rem 0.75rem; border-radius: 20px; font-size: 0.75rem; display: flex; align-items: center; gap: 0.35rem; border-color: var(--border-color); color: var(--text-primary); background: rgba(255, 255, 255, 0.05); font-weight: 700; cursor: pointer; transition: var(--transition-fast);">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="width:14px; height:14px; stroke: var(--color-accent);">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            Mejores Precios Cerca
-          </button>
           
           <!-- DENUNCIA BUTTON -->
           <button class="btn-primary" onclick="openReportModal()" id="desktop-report-btn" style="height: 32px; padding: 0.35rem 0.75rem; border-radius: 20px; font-size: 0.75rem; display: flex; align-items: center; gap: 0.35rem; background: linear-gradient(135deg, var(--color-danger), #b91c1c); border: none; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.25); color: white; font-weight: 700;">
@@ -258,9 +250,15 @@
             Volver al Dashboard
           </button>
 
-          <button type="button" class="btn-primary" id="btn-sync-waze" onclick="syncWithWazeAndGoogleMaps()" style="font-size: 0.75rem; padding: 0.45rem 0.9rem; border-radius: 20px; font-weight: 700; border: none; display: flex; align-items: center; gap: 0.35rem; cursor: pointer; transition: var(--transition-fast); background: var(--color-accent); color: white; box-shadow: 0 4px 10px rgba(99,102,241,0.25);">
-            <span>📡</span> Sincronizar Google Maps / Waze
-          </button>
+          <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+            <button type="button" class="btn-secondary" id="btn-best-prices-near-me" onclick="startBestPricesNearMe()" style="font-size: 0.75rem; padding: 0.45rem 0.9rem; border-radius: 20px; font-weight: 700; display: flex; align-items: center; gap: 0.35rem; cursor: pointer; transition: var(--transition-fast); border: 1px solid var(--border-color); color: var(--text-primary); background: rgba(255, 255, 255, 0.05);">
+              <span>📍</span> Precios más bajos cerca de mí
+            </button>
+
+            <button type="button" class="btn-primary" id="btn-sync-waze" onclick="syncWithWazeAndGoogleMaps()" style="font-size: 0.75rem; padding: 0.45rem 0.9rem; border-radius: 20px; font-weight: 700; border: none; display: flex; align-items: center; gap: 0.35rem; cursor: pointer; transition: var(--transition-fast); background: var(--color-accent); color: white; box-shadow: 0 4px 10px rgba(99,102,241,0.25);">
+              <span>📡</span> Sincronizar Google Maps / Waze
+            </button>
+          </div>
         </div>
 
         <!-- SYNC BAR (MAP HIDDEN) -->
