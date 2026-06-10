@@ -9,6 +9,7 @@ let selectedBrand = '';
 let stations = [];
 let lastActiveSection = 'dashboard';
 let selectedPhotoUrl = null; // Track loaded evidence photo URL
+let bestPricesFilter = { active: false, fuelType: null, userCoords: null };
 
 // --- Build / Live Refresh ---
 const APP_BUILD_VERSION = '2026-06-01T16:04:20Z';
@@ -709,16 +710,21 @@ function renderStationsGrid() {
     return;
   }
   
-  // Find cheapest station for regular to highlight
-  const cheapestReg = Math.min(...filtered.map(s => s.prices.regular));
+  // Find cheapest station for the active fuel category (Regular, Premium or Diésel)
+  let fuelTypeToHighlight = 'regular';
+  if (bestPricesFilter.active && bestPricesFilter.fuelType) {
+    fuelTypeToHighlight = bestPricesFilter.fuelType;
+  }
+  
+  const cheapestVal = Math.min(...filtered.map(s => s.prices[fuelTypeToHighlight] || Infinity));
 
   filtered.forEach(station => {
     const card = document.createElement('div');
     card.className = 'station-card';
     card.id = `card-${station.id}`;
     
-    const isCheapest = station.prices.regular === cheapestReg;
-    const cheapestBadge = isCheapest ? `<span class="fuel-badge" style="background-color: var(--color-regular-glow); color: var(--color-regular); font-size: 0.65rem; padding: 0.25rem 0.5rem; margin-left: 0.5rem;">Más Barata</span>` : '';
+    const isCheapest = station.prices[fuelTypeToHighlight] === cheapestVal;
+    const cheapestBadge = isCheapest ? `<span class="fuel-badge" style="background-color: var(--color-${fuelTypeToHighlight}-glow); color: var(--color-${fuelTypeToHighlight}); font-size: 0.65rem; padding: 0.25rem 0.5rem; margin-left: 0.5rem;">Más Barata</span>` : '';
     
     const distanceBadge = (station.distanceMeters && station.distanceMeters !== Infinity) ? 
       `<span class="fuel-badge" style="background-color: rgba(99, 102, 241, 0.15); color: #a5b4fc; font-size: 0.65rem; padding: 0.25rem 0.5rem; margin-left: 0.25rem;">📍 a ${(station.distanceMeters / 1000).toFixed(1)} km</span>` : '';
@@ -797,41 +803,41 @@ function renderStationsGrid() {
       
       <table class="station-prices-table" style="margin-top: 1rem;">
         <tbody>
-          <tr>
+          <tr style="${fuelTypeToHighlight === 'regular' ? 'background: rgba(16, 185, 129, 0.08); border-radius: 8px;' : ''}">
             <td>
-              <div class="price-type">
+              <div class="price-type" style="padding-left: 0.35rem;">
                 <div class="price-type-dot regular"></div> Regular
               </div>
             </td>
             <td>
-              <div class="price-value-stack">
-                <strong class="price-value ${isCheapest ? 'cheap' : ''} ${violatesRegular ? 'danger' : ''}">${formatPrice(station.prices.regular)}</strong>
+              <div class="price-value-stack" style="padding-right: 0.35rem;">
+                <strong class="price-value ${fuelTypeToHighlight === 'regular' && isCheapest ? 'cheap' : ''} ${violatesRegular ? 'danger' : ''}">${formatPrice(station.prices.regular)}</strong>
                 ${renderTrendChip(station.prices.regular, getStationPreviousPrice(station.id, 'regular'))}
               </div>
             </td>
           </tr>
-          <tr>
+          <tr style="${fuelTypeToHighlight === 'premium' ? 'background: rgba(245, 158, 11, 0.08); border-radius: 8px;' : ''}">
             <td>
-              <div class="price-type">
+              <div class="price-type" style="padding-left: 0.35rem;">
                 <div class="price-type-dot premium"></div> Premium
               </div>
             </td>
             <td>
-              <div class="price-value-stack">
-                <strong class="price-value ${violatesPremium ? 'danger' : ''}">${formatPrice(station.prices.premium)}</strong>
+              <div class="price-value-stack" style="padding-right: 0.35rem;">
+                <strong class="price-value ${fuelTypeToHighlight === 'premium' && isCheapest ? 'cheap' : ''} ${violatesPremium ? 'danger' : ''}">${formatPrice(station.prices.premium)}</strong>
                 ${renderTrendChip(station.prices.premium, getStationPreviousPrice(station.id, 'premium'))}
               </div>
             </td>
           </tr>
-          <tr>
+          <tr style="${fuelTypeToHighlight === 'diesel' ? 'background: rgba(14, 165, 233, 0.08); border-radius: 8px;' : ''}">
             <td>
-              <div class="price-type">
+              <div class="price-type" style="padding-left: 0.35rem;">
                 <div class="price-type-dot diesel"></div> Diésel
               </div>
             </td>
             <td>
-              <div class="price-value-stack">
-                <strong class="price-value ${violatesDiesel ? 'danger' : ''}">${formatPrice(station.prices.diesel)}</strong>
+              <div class="price-value-stack" style="padding-right: 0.35rem;">
+                <strong class="price-value ${fuelTypeToHighlight === 'diesel' && isCheapest ? 'cheap' : ''} ${violatesDiesel ? 'danger' : ''}">${formatPrice(station.prices.diesel)}</strong>
                 ${renderTrendChip(station.prices.diesel, getStationPreviousPrice(station.id, 'diesel'))}
               </div>
             </td>
@@ -990,7 +996,43 @@ function saveInlinePrices(stationId) {
 
 // --- Get Filtered Stations List ---
 function getFilteredStations() {
-  return stations.filter(station => {
+  let list = [...stations];
+  
+  if (bestPricesFilter.active && bestPricesFilter.fuelType && bestPricesFilter.userCoords) {
+    const { lat, lon } = bestPricesFilter.userCoords;
+    
+    // First, ensure all stations have computed distance to user coords
+    list = list.map(station => {
+      if (station.coords) {
+        const distance = Math.sqrt(Math.pow(station.coords.lat - lat, 2) + Math.pow(station.coords.lon - lon, 2));
+        station.distanceMeters = Math.round(distance * 111.3 * 1000);
+      } else {
+        station.distanceMeters = Infinity;
+      }
+      return station;
+    });
+    
+    // Filter by distance (15 km)
+    let nearbyList = list.filter(station => station.distanceMeters <= 15000);
+    
+    // Fallback: if fewer than 3 stations are found within 15 km, take the 6 closest ones overall
+    if (nearbyList.length < 3) {
+      const sortedByDist = [...list].sort((a, b) => a.distanceMeters - b.distanceMeters);
+      nearbyList = sortedByDist.slice(0, 6);
+    }
+    
+    // Sort the nearby list by the price of the selected fuel type ascending
+    const fuel = bestPricesFilter.fuelType;
+    nearbyList.sort((a, b) => {
+      const priceA = a.prices[fuel] || Infinity;
+      const priceB = b.prices[fuel] || Infinity;
+      return priceA - priceB;
+    });
+    
+    list = nearbyList;
+  }
+  
+  return list.filter(station => {
     const matchesSearch = searchQuery === '' || 
       station.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       station.address.toLowerCase().includes(searchQuery.toLowerCase());
@@ -2688,6 +2730,107 @@ function navigateToWazeFromProfile() {
     return;
   }
   navigateToWaze(station.coords.lat, station.coords.lon);
+}
+
+// --- "Mejores Precios Cerca de Mí" Logic ---
+function startBestPricesNearMe() {
+  // 1. Navigate to directory section
+  navigateTo('directory');
+  
+  // 2. Clear any active state or selectors
+  const panel = document.getElementById('best-prices-panel');
+  const loading = document.getElementById('best-prices-loading');
+  const selector = document.getElementById('best-prices-fuel-selector');
+  const alertBanner = document.getElementById('best-prices-filter-alert');
+  
+  if (panel) panel.style.display = 'block';
+  if (loading) loading.style.display = 'flex';
+  if (selector) selector.style.display = 'none';
+  if (alertBanner) alertBanner.style.display = 'none';
+  
+  // 3. Request user location
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        bestPricesFilter.userCoords = { lat, lon };
+        
+        // Hide loading, show fuel selector
+        if (loading) loading.style.display = 'none';
+        if (selector) selector.style.display = 'flex';
+        
+        showToast("📍 Ubicación obtenida correctamente.", "success");
+      },
+      (error) => {
+        console.warn("Best Prices geolocation error: " + error.message + ". Falling back to San Juan metropolitan area...");
+        bestPricesFilter.userCoords = { lat: 18.3720, lon: -66.0890 };
+        
+        if (loading) loading.style.display = 'none';
+        if (selector) selector.style.display = 'flex';
+        
+        showToast("⚠️ No pudimos acceder a tu GPS. Usando ubicación metropolitana como fallback.", "warning");
+      },
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+    );
+  } else {
+    bestPricesFilter.userCoords = { lat: 18.3720, lon: -66.0890 };
+    if (loading) loading.style.display = 'none';
+    if (selector) selector.style.display = 'flex';
+    showToast("⚠️ Tu navegador no soporta geolocalización. Usando ubicación metropolitana como fallback.", "warning");
+  }
+}
+
+function selectFuelForBestPrices(fuelType) {
+  if (!bestPricesFilter.userCoords) {
+    showToast("Error: No se ha detectado la ubicación.", "error");
+    return;
+  }
+  
+  // 1. Set active filter
+  bestPricesFilter.active = true;
+  bestPricesFilter.fuelType = fuelType;
+  
+  // 2. Hide selector panel to keep UI clean
+  const panel = document.getElementById('best-prices-panel');
+  if (panel) panel.style.display = 'none';
+  
+  // 3. Update and show the filter active banner
+  const alertBanner = document.getElementById('best-prices-filter-alert');
+  const alertText = document.getElementById('best-prices-filter-text');
+  if (alertBanner && alertText) {
+    let fuelLabel = fuelType === 'regular' ? 'Regular' : fuelType === 'premium' ? 'Premium' : 'Diésel';
+    alertText.textContent = `Mostrando mejores precios de combustible ${fuelLabel} cerca de ti`;
+    alertBanner.style.display = 'flex';
+  }
+  
+  // 4. Render grid
+  renderStationsGrid();
+  
+  showToast(`📍 Buscando los mejores precios de gasolina ${fuelType}...`, "success");
+}
+
+function clearBestPricesFilter() {
+  bestPricesFilter.active = false;
+  bestPricesFilter.fuelType = null;
+  bestPricesFilter.userCoords = null;
+  
+  // Hide panels and banner
+  const panel = document.getElementById('best-prices-panel');
+  const alertBanner = document.getElementById('best-prices-filter-alert');
+  if (panel) panel.style.display = 'none';
+  if (alertBanner) alertBanner.style.display = 'none';
+  
+  // Clear distance meters from stations to avoid showing stale distance badge
+  stations = stations.map(s => {
+    delete s.distanceMeters;
+    return s;
+  });
+  
+  // Restore default sorting
+  autoSortStationsByProximity(); // This will auto-sort closest and render
+  
+  showToast("📍 Filtros de mejores precios restablecidos.", "success");
 }
 
 
