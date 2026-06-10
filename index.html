@@ -242,33 +242,23 @@
       <section id="directory-section" class="app-section">
         
         <!-- GO BACK BAR FOR DIRECTORY -->
-        <div class="directory-back-bar" style="margin-bottom: 1.25rem;">
+        <div class="directory-back-bar" style="margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
           <button class="btn-secondary" onclick="navigateTo('dashboard')" style="display: inline-flex; align-items: center; gap: 0.5rem; border-color: var(--border-color); color: var(--text-primary); background: rgba(255, 255, 255, 0.05); font-weight: 700; padding: 0.45rem 0.9rem; border-radius: 20px; font-size: 0.8rem; cursor: pointer; transition: var(--transition-fast); border: 1px solid var(--border-color);">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="width: 12px; height: 12px; stroke: var(--text-primary);">
               <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
             Volver al Dashboard
           </button>
+
+          <button type="button" class="btn-primary" id="btn-sync-waze" onclick="syncWithWazeAndGoogleMaps()" style="font-size: 0.75rem; padding: 0.45rem 0.9rem; border-radius: 20px; font-weight: 700; border: none; display: flex; align-items: center; gap: 0.35rem; cursor: pointer; transition: var(--transition-fast); background: var(--color-accent); color: white; box-shadow: 0 4px 10px rgba(99,102,241,0.25);">
+            <span>📡</span> Sincronizar Google Maps / Waze
+          </button>
         </div>
 
-        <!-- INTERACTIVE GPS MAP & SYNC BAR -->
-        <div class="glass-panel" style="padding: 1rem; border-radius: 16px; margin-bottom: 1.25rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-              <span style="font-size: 1.1rem;">🗺️</span>
-              <h3 style="font-family: var(--font-title); font-size: 0.95rem; font-weight: 800; margin: 0;">Mapa Localizador GPS (Google Maps / Waze)</h3>
-            </div>
-            <button type="button" class="btn-primary" id="btn-sync-waze" onclick="syncWithWazeAndGoogleMaps()" style="font-size: 0.75rem; padding: 0.4rem 0.8rem; border-radius: 20px; font-weight: 700; border: none; display: flex; align-items: center; gap: 0.35rem; cursor: pointer; transition: var(--transition-fast); background: var(--color-accent); color: white; box-shadow: 0 4px 10px rgba(99,102,241,0.25);">
-              <span>📡</span> Sincronizar Google Maps / Waze
-            </button>
-          </div>
-          
-          <div id="waze-sync-status" style="display: none; background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.2); padding: 0.5rem; border-radius: 8px; font-size: 0.75rem; font-weight: 700; color: var(--color-accent); text-align: center; margin-bottom: 0.75rem; position: relative; overflow: hidden;">
-            <div class="ocr-scan-bar"></div>
-            <span>📡 Conectando a redes de Waze y Google Maps para importar estaciones...</span>
-          </div>
-
-          <div id="gasolinapr-map" style="width: 100%; height: 260px; border-radius: 12px; border: 1px solid var(--border-color); z-index: 1;"></div>
+        <!-- SYNC BAR (MAP HIDDEN) -->
+        <div id="waze-sync-status" style="display: none; background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.2); padding: 0.5rem; border-radius: 8px; font-size: 0.75rem; font-weight: 700; color: var(--color-accent); text-align: center; margin-bottom: 1.25rem; position: relative; overflow: hidden;">
+          <div class="ocr-scan-bar"></div>
+          <span>📡 Conectando a redes de Waze y Google Maps para importar estaciones...</span>
         </div>
         
         <!-- SEARCH FILTERS BAR -->
@@ -627,8 +617,9 @@
           </div>
         </div>
         
-        <div class="modal-footer">
-          <button type="button" class="btn-secondary" onclick="closeProfileModal()">Cerrar</button>
+        <div class="modal-footer" style="display: flex; gap: 0.5rem; justify-content: flex-end; align-items: center;">
+          <button type="button" class="btn-secondary" onclick="closeProfileModal()" style="margin-right: auto;">Cerrar</button>
+          <button type="button" class="btn-primary" id="profile-modal-waze-btn" onclick="navigateToWazeFromProfile()" style="background-color: #33a0ff; border-color: #33a0ff; box-shadow: 0 4px 10px rgba(51, 160, 255, 0.25); font-weight: 700; border: none; display: flex; align-items: center; gap: 0.25rem; height: 36px; padding: 0 0.85rem; border-radius: 8px; color: white;">🚙 Viajar con Waze</button>
           <button type="button" class="btn-primary" onclick="switchProfileToEditMode()">✏️ Editar Detalles</button>
         </div>
       </div>

@@ -774,6 +774,9 @@ function renderStationsGrid() {
               <button class="btn-card-action" onclick="openProfileModal('${station.id}')" style="margin-top: 0.5rem; padding: 0.35rem 0.6rem; font-size: 0.65rem; border: none; color: white; background: var(--color-accent); box-shadow: 0 4px 10px rgba(99, 102, 241, 0.25); font-weight: 800; border-radius: 8px; display: inline-flex; align-items: center; gap: 0.2rem; transition: var(--transition-fast);">
                 <span>📋</span> Perfil
               </button>
+              <button class="btn-card-action" onclick="navigateToWaze(${station.coords?.lat}, ${station.coords?.lon})" style="margin-top: 0.5rem; padding: 0.35rem 0.6rem; font-size: 0.65rem; border: none; color: white; background: #33a0ff; box-shadow: 0 4px 10px rgba(51, 160, 255, 0.25); font-weight: 800; border-radius: 8px; display: inline-flex; align-items: center; gap: 0.2rem; transition: var(--transition-fast);">
+                <span>🚙</span> Viajar
+              </button>
             </div>
           </div>
         </div>
@@ -2665,6 +2668,26 @@ function renderFavoritesPanel() {
 function removeFavoriteFromDashboard(stationId, event) {
   if (event) event.stopPropagation();
   toggleFavoriteStation(stationId);
+}
+
+// --- Waze Deep Link Navigation Helpers ---
+function navigateToWaze(lat, lon) {
+  if (!lat || !lon) {
+    showToast('Coordenadas de la estación no disponibles.', 'error');
+    return;
+  }
+  const url = `https://waze.com/ul?ll=${lat},${lon}&navigate=yes`;
+  window.open(url, '_blank');
+}
+
+function navigateToWazeFromProfile() {
+  if (!activeProfileStationId) return;
+  const station = stations.find(s => s.id === activeProfileStationId);
+  if (!station || !station.coords) {
+    showToast('Coordenadas de la estación no disponibles.', 'error');
+    return;
+  }
+  navigateToWaze(station.coords.lat, station.coords.lon);
 }
 
 
