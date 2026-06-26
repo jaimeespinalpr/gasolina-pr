@@ -1,22 +1,22 @@
 {
   "source_url": "https://www.daco.pr.gov/",
   "official_page_updated_at": "25 de junio de 2026",
-  "last_scraped_at": "2026-06-25T15:35:22Z",
+  "last_scraped_at": "2026-06-26T15:18:54Z",
   "prices": {
     "regular": {
-      "low": 98.7,
-      "high": 102.7,
-      "mid": 100.7
+      "low": 99.7,
+      "high": 106.7,
+      "mid": 103.2
     },
     "premium": {
-      "low": 110.7,
-      "high": 119.7,
-      "mid": 115.2
+      "low": 113.7,
+      "high": 122.7,
+      "mid": 118.2
     },
     "diesel": {
-      "low": 111.7,
-      "high": 116.7,
-      "mid": 114.2
+      "low": 112.7,
+      "high": 119.7,
+      "mid": 116.2
     }
   },
   "history": [
@@ -225,6 +225,15 @@
         "regular": 100.7,
         "premium": 115.2,
         "diesel": 114.2
+      }
+    },
+    {
+      "scraped_at": "2026-06-26T15:18:54Z",
+      "official_page_updated_at": "25 de junio de 2026",
+      "mid": {
+        "regular": 103.2,
+        "premium": 118.2,
+        "diesel": 116.2
       }
     }
   ]
